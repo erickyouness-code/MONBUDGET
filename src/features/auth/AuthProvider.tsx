@@ -2,7 +2,8 @@ import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
 import { cancelAllReminders } from '@/shared/lib/notifications';
-import { queryClient } from '@/shared/lib/queryClient';
+import { useLockState } from '@/features/security/store';
+import { clearCachedData } from '@/shared/lib/queryClient';
 import { isSupabaseConfigured, supabase } from '@/shared/lib/supabase';
 
 type AuthState = {
@@ -36,8 +37,12 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
       // Déconnexion : on vide le cache pour ne rien laisser de l'ancien compte.
+      // Une connexion avec le mot de passe vaut déverrouillage.
+      if (event === 'SIGNED_IN') useLockState.getState().setUnlocked(true);
       if (event === 'SIGNED_OUT') {
-        queryClient.clear();
+        // Y compris la copie gardée pour le mode hors connexion.
+        void clearCachedData();
+        useLockState.getState().setUnlocked(false);
         // Plus aucun rappel du compte précédent sur ce téléphone.
         void cancelAllReminders();
       }

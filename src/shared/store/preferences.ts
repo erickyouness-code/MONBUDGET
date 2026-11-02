@@ -24,11 +24,14 @@ type PreferencesState = {
   demoMode: boolean;
   /** Rappels du calendrier sur le téléphone. */
   notifications: boolean;
+  /** Verrouillage par Face ID / empreinte / code du téléphone. */
+  biometricLock: boolean;
   setTheme: (theme: ThemePreference) => void;
   setLanguage: (language: Language | null) => void;
   setCurrency: (currency: CurrencyCode) => void;
   setDemoMode: (demoMode: boolean) => void;
   setNotifications: (notifications: boolean) => void;
+  setBiometricLock: (biometricLock: boolean) => void;
 };
 
 // On garde la dernière écriture pour pouvoir l'attendre avant un redémarrage.
@@ -61,12 +64,14 @@ export const usePreferences = create<PreferencesState>()(
       setDemoMode: (demoMode) => set({ demoMode }),
       notifications: true,
       setNotifications: (notifications) => set({ notifications }),
+      biometricLock: false,
+      setBiometricLock: (biometricLock) => set({ biometricLock }),
     }),
     {
       name: 'monbudget.preferences',
       version: 1,
       storage: createJSONStorage(() => trackedStorage),
-      partialize: ({ theme, language, currency, demoMode, notifications }) => ({ theme, language, currency, demoMode, notifications }),
+      partialize: ({ theme, language, currency, demoMode, notifications, biometricLock }) => ({ theme, language, currency, demoMode, notifications, biometricLock }),
     },
   ),
 );

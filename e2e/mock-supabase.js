@@ -48,6 +48,8 @@ function createDb({ onboarded = false } = {}) {
     onSync: null,
     // Fonction « assistant » : requêtes reçues et réponses préparées par le test.
     assistantCalls: [],
+    deleteCalls: [],
+    deleted: false,
     assistantReplies: [],
     categories: SYSTEM_CATEGORIES.map(([kind, key, sort_order, color]) => ({ id: uid(), user_id: null, kind, key, name: null, icon: key, color, sort_order, is_archived: false })),
   };
@@ -202,7 +204,7 @@ async function installMock(page, db) {
 
     if (p === '/rest/v1/profiles') {
       if (method === 'PATCH') Object.assign(db.profile, body);
-      return json(200, db.profile);
+      return single ? json(200, db.profile) : json(200, [db.profile]);
     }
     if (p === '/rest/v1/rpc/monthly_overview') return json(200, db.monthlyOverview(body.p_until, body.p_months));
     if (p === '/rest/v1/rpc/budget_status') return json(200, db.budgetStatus(body.p_month));
@@ -303,6 +305,14 @@ async function installMock(page, db) {
       if (method === 'PATCH') { target.forEach((t) => Object.assign(t, body)); return empty(204); }
       if (method === 'DELETE') { db.transactions = db.transactions.filter((t) => !target.includes(t)); return empty(204); }
       return single ? json(200, target[0]) : json(200, target);
+    }
+    if (p === '/rest/v1/budgets') return json(200, applyFilters(db.budgets, params));
+    if (p === '/functions/v1/delete-account') {
+      db.deleteCalls.push(body);
+      if (body.confirm !== 'DELETE') return json(400, { code: 'bad_request' });
+      if (body.password !== 'budget2026') return json(403, { code: 'wrong_password' });
+      db.deleted = true;
+      return json(200, { deleted: true });
     }
     return json(404, { message: 'non simulé' });
   });

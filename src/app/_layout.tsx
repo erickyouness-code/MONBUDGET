@@ -1,5 +1,5 @@
 import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, useFonts } from '@expo-google-fonts/inter';
-import { QueryClientProvider } from '@tanstack/react-query';
+import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client';
 import { router, SplashScreen, Stack } from 'expo-router';
 import { CloudOff, X } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
@@ -9,15 +9,17 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
+import { AppLock } from '@/features/security/AppLock';
 import { useProfile } from '@/features/profile/api';
 import { useEntitlement, useSubscriptionLifecycle } from '@/features/subscription/api';
 import i18n, { applyLayoutDirection, deviceLanguageCode, useIsRTL } from '@/shared/i18n';
 import { resolveLanguage } from '@/shared/i18n/languages';
-import { queryClient } from '@/shared/lib/queryClient';
+import { persistOptions, queryClient } from '@/shared/lib/queryClient';
 import { usePreferences } from '@/shared/store/preferences';
 import { useHydrated } from '@/shared/store/useHydrated';
 import { AppThemeProvider, useTheme } from '@/shared/theme/ThemeProvider';
 import { Button, EmptyState } from '@/shared/ui';
+import { OfflineBanner } from '@/features/offline/OfflineBanner';
 import { ToastHost } from '@/shared/ui/ToastHost';
 
 void SplashScreen.preventAutoHideAsync();
@@ -41,14 +43,16 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <QueryClientProvider client={queryClient}>
+        <PersistQueryClientProvider client={queryClient} persistOptions={persistOptions}>
           <AuthProvider>
             <AppThemeProvider>
               <RootNavigator />
+              <OfflineBanner />
               <ToastHost />
+              <AppLock />
             </AppThemeProvider>
           </AuthProvider>
-        </QueryClientProvider>
+        </PersistQueryClientProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
   );
@@ -84,8 +88,8 @@ function RootNavigator() {
   const onboarded = !!profile.data?.onboarding_completed_at;
   // L'accès est décidé par le SERVEUR (table entitlements écrite par RevenueCat).
   const premium = entitlement.data?.active === true;
-  const waitingForProfile = signedIn && profile.isPending;
-  const waitingForEntitlement = signedIn && onboarded && entitlement.isPending;
+  const waitingForProfile = signedIn && profile.isPending && profile.fetchStatus !== 'paused';
+  const waitingForEntitlement = signedIn && onboarded && entitlement.isPending && entitlement.fetchStatus !== 'paused';
   const ready = !initializing && !waitingForProfile && !waitingForEntitlement;
 
   useEffect(() => {
@@ -93,6 +97,17 @@ function RootNavigator() {
   }, [ready]);
 
   if (!ready) return null;
+
+  // Hors connexion sans aucune donnée gardée sur le téléphone : on l'explique.
+  const offlineWithoutData =
+    (signedIn && profile.fetchStatus === 'paused' && !profile.data) || (signedIn && onboarded && entitlement.fetchStatus === 'paused' && !entitlement.data);
+  if (offlineWithoutData) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.background, padding: 24 }}>
+        <EmptyState icon={CloudOff} title={t('offline.title')} message={t('offline.message')} />
+      </View>
+    );
+  }
 
   // Profil impossible à charger (réseau coupé…) : on le dit et on propose de réessayer.
   if ((signedIn && profile.isError) || (signedIn && onboarded && entitlement.isError && !entitlement.data)) {
@@ -134,6 +149,7 @@ function RootNavigator() {
       {/* Réglages : accessibles avec ou sans abonnement (langue, déconnexion, données). */}
       <Stack.Protected guard={signedIn && onboarded} redirectTo={home}>
         <Stack.Screen name="settings" options={{ ...modalOptions, title: t('settings.title') }} />
+        <Stack.Screen name="data" options={{ ...modalOptions, title: t('data.title') }} />
       </Stack.Protected>
       <Stack.Protected guard={signedIn && onboarded && premium} redirectTo={home}>
         <Stack.Screen name="(tabs)" />

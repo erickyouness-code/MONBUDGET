@@ -1,6 +1,6 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { LogOut, Wallet } from 'lucide-react-native';
+import { Database, LogOut, Wallet } from 'lucide-react-native';
 import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Linking, Switch, View } from 'react-native';
@@ -8,6 +8,8 @@ import { Linking, Switch, View } from 'react-native';
 import { useAccounts } from '@/features/accounts/api';
 import { useAssistantConsent } from '@/features/assistant/api';
 import { useAuth } from '@/features/auth/AuthProvider';
+import { authenticate, biometricAvailability, type BiometricAvailability } from '@/features/security/biometrics';
+import { useLockState } from '@/features/security/store';
 import { useCurrency, useUpdateProfile } from '@/features/profile/api';
 import { useEntitlement, useSyncEntitlement } from '@/features/subscription/api';
 import { statusLine } from '@/features/subscription/logic';
@@ -56,10 +58,23 @@ export default function SettingsScreen() {
   const notificationsOn = usePreferences((s) => s.notifications);
   const setNotifications = usePreferences((s) => s.setNotifications);
   const [access, setAccess] = useState<NotificationAccess>('undetermined');
+  const biometricLock = usePreferences((s) => s.biometricLock);
+  const setBiometricLock = usePreferences((s) => s.setBiometricLock);
+  const [biometrics, setBiometrics] = useState<BiometricAvailability>('available');
 
   useEffect(() => {
     void getNotificationAccess().then(setAccess);
+    void biometricAvailability().then(setBiometrics);
   }, []);
+
+  /** Activer le verrou demande d'abord une vérification (on ne verrouille pas quelqu'un dehors). */
+  const toggleBiometricLock = async (value: boolean) => {
+    if (!value) return setBiometricLock(false);
+    const ok = await authenticate(t('lock.prompt'), t('common.cancel'));
+    if (!ok) return;
+    useLockState.getState().setUnlocked(true);
+    setBiometricLock(true);
+  };
 
   const toggleNotifications = async (value: boolean) => {
     setNotifications(value);
@@ -202,6 +217,29 @@ export default function SettingsScreen() {
               <Button label={t('settings.openPhoneSettings')} variant="secondary" onPress={() => void Linking.openSettings()} />
             </>
           ) : null}
+        </Card>
+      </Section>
+
+      <Card style={{ paddingVertical: spacing.xs }}>
+        <ListRow icon={Database} title={t('settings.myData')} description={t('data.rowDescription')} onPress={() => router.push('/data')} />
+      </Card>
+
+      <Section
+        title={t('settings.security')}
+        hint={biometrics === 'unsupported' ? t('settings.biometricWeb') : biometrics === 'notEnrolled' ? t('settings.biometricUnavailable') : t('settings.biometricHint')}
+      >
+        <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingVertical: spacing.md }}>
+          <AppText variant="bodyStrong" style={{ flex: 1 }}>
+            {t('settings.biometricLock')}
+          </AppText>
+          <Switch
+            accessibilityLabel={t('settings.biometricLock')}
+            value={biometricLock && biometrics === 'available'}
+            disabled={biometrics !== 'available'}
+            onValueChange={(v) => void toggleBiometricLock(v)}
+            trackColor={{ true: colors.primary, false: colors.surfaceMuted }}
+            thumbColor={colors.surface}
+          />
         </Card>
       </Section>
 

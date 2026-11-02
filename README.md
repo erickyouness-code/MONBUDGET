@@ -38,7 +38,7 @@ Sans configuration, l'application s'ouvre en « mode développement » (connexio
 | `npm run lint` | Vérifie la qualité du code |
 | `npm run test:db` | Teste la base et les règles de sécurité (PostgreSQL requis) |
 | `npm run test:e2e` | Parcours complets dans un navigateur, avec un serveur simulé |
-| `npm run test:functions` | Exécute les fonctions serveur (webhook d'abonnement, assistant) face à de faux services (Deno requis, sinon téléchargé) |
+| `npm run test:functions` | Exécute les fonctions serveur (abonnement, assistant, suppression de compte) face à de faux services (Deno requis, sinon téléchargé) |
 | `npm run sync:functions` | Recopie la logique partagée (échéances, objectifs) vers les fonctions serveur |
 
 ## Organisation du code
@@ -63,13 +63,15 @@ src/
     ui/                Composants réutilisables (Card, Button, AmountText…)
   features/            Logique par fonctionnalité (auth, profile, dashboard…)
 supabase/migrations/   Structure de la base de données (SQL)
-supabase/functions/    Fonctions serveur (abonnement, assistant)
+supabase/functions/    Fonctions serveur (abonnement, assistant, suppression de compte)
 supabase/tests/        Tests des règles de sécurité
 e2e/                   Parcours complets testés dans le navigateur
 docs/PLAN.md           Architecture et plan de développement
 docs/SUPABASE.md       Guide de configuration du serveur
 docs/ABONNEMENT.md     Mise en service de l'abonnement
 docs/ASSISTANT.md      Mise en service de l'assistant
+docs/PUBLICATION.md    Publication sur l'App Store et Google Play
+docs/legal/            Brouillons : politique de confidentialité, conditions d'utilisation
 ```
 
 ## Règles du projet

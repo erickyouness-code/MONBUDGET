@@ -47,7 +47,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 | 7 | Analyse intelligente (règles) | ✅ Terminé (aucune modification de la base) |
 | 8 | Abonnement (RevenueCat, essai, page Premium, webhook) | ✅ Code terminé — mise en service : `docs/ABONNEMENT.md` |
 | 9 | Assistant conversationnel | ✅ Code terminé — mise en service : `docs/ASSISTANT.md` |
-| 10 | Finitions : export, suppression, biométrie, hors-ligne, publication | À faire |
+| 10 | Finitions : export, suppression, biométrie, hors-ligne, publication | ✅ Code terminé — publication : `docs/PUBLICATION.md` |
 
 ## Étape 1 — détails
 
@@ -169,6 +169,24 @@ des transactions des 4 derniers mois, des budgets, des soldes et du calendrier :
 - La logique des échéances et des objectifs est partagée avec le serveur par copie vérifiée
   (`npm run sync:functions`).
 
+## Étape 10 — détails
+
+- Mes données (Réglages) : export des transactions en CSV (Excel : « ; » et virgule décimale en
+  français / arabe, BOM UTF-8, formules neutralisées) et export complet en JSON ; partage via
+  `expo-sharing` sur téléphone, téléchargement sur le web.
+- Suppression du compte : fonction Edge `delete-account` (jeton + mot de passe redemandé +
+  confirmation explicite), effacement de l'historique RevenueCat, puis suppression de
+  l'utilisateur : toutes les données disparaissent par cascade (testé en SQL) ; le journal des
+  paiements est anonymisé. Rappel d'annuler l'abonnement chez Apple / Google.
+- Verrouillage par Face ID / empreinte / code du téléphone (`expo-local-authentication`), au
+  lancement et après 1 minute en arrière-plan ; contenu masqué dans l'aperçu des applications.
+- Hors connexion : cache TanStack Query copié sur le téléphone (7 jours, effacé à la
+  déconnexion), détection du réseau (`expo-network`), bandeau, modifications refusées tout de
+  suite avec un message au lieu de rester bloquées.
+- Publication : icônes MonBudget (`assets/brand/`), écran de démarrage clair / sombre,
+  autorisation Face ID, déclaration de chiffrement, guide `docs/PUBLICATION.md`, brouillons des
+  pages légales dans `docs/legal/`.
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
@@ -185,5 +203,13 @@ des transactions des 4 derniers mois, des budgets, des soldes et du calendrier :
   prix de l'abonnement.
 - En mode démonstration, l'assistant répond avec les vraies données (un bandeau le signale).
 - Le clavier au-dessus de la zone de saisie n'a pas été vérifié sur un vrai téléphone.
+- Hors connexion, on peut consulter mais pas modifier (pas de file d'attente des modifications).
+- La copie hors connexion est stockée sans chiffrement supplémentaire (zone privée de
+  l'application) ; activer le verrouillage Face ID protège l'accès à l'application.
+- Verrouillage biométrique, partage des fichiers d'export et icônes non vérifiés sur un vrai
+  téléphone (impossible depuis cet environnement).
+- Connexion avec Apple / Google non ajoutée (non obligatoire tant que seule la connexion par
+  e-mail existe ; nécessite les comptes développeur).
+- Les pages légales sont des brouillons à faire valider par un juriste.
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)
   sera nécessaire à partir de l'étape 8.

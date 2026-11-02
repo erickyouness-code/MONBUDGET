@@ -33,3 +33,23 @@ export async function saveEntitlement(userId: string, row: EntitlementRow): Prom
 export function json(status: number, body: unknown): Response {
   return new Response(JSON.stringify(body), { status, headers: { 'Content-Type': 'application/json' } });
 }
+
+/**
+ * Efface le client chez RevenueCat (suppression de compte). Cela n'annule PAS
+ * un abonnement en cours chez Apple / Google : l'utilisateur doit le faire.
+ * Renvoie false en cas d'échec (la suppression du compte continue).
+ */
+export async function deleteRevenueCatCustomer(userId: string): Promise<boolean> {
+  const secret = Deno.env.get('REVENUECAT_SECRET_API_KEY');
+  if (!secret) return false;
+  const api = Deno.env.get('REVENUECAT_API_URL') ?? 'https://api.revenuecat.com';
+  try {
+    const res = await fetch(`${api}/v1/subscribers/${encodeURIComponent(userId)}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${secret}` },
+    });
+    return res.ok || res.status === 404;
+  } catch {
+    return false;
+  }
+}

@@ -5,7 +5,8 @@ import { ActivityIndicator, Platform, Pressable, View, type PressableProps } fro
 import { useTheme } from '../theme/ThemeProvider';
 import { AppText } from './AppText';
 
-type Variant = 'primary' | 'secondary' | 'ghost';
+/** danger : action irréversible (suppression définitive). */
+type Variant = 'primary' | 'secondary' | 'ghost' | 'danger';
 
 type Props = Omit<PressableProps, 'children' | 'style'> & {
   label: string;
@@ -20,13 +21,14 @@ export function Button({ label, variant = 'primary', icon: Icon, fullWidth, load
   const disabled = disabledProp || loading;
   const { colors, radius, spacing } = useTheme();
 
-  const background = { primary: colors.primary, secondary: colors.primarySoft, ghost: 'transparent' }[variant];
+  const background = { primary: colors.primary, secondary: colors.primarySoft, ghost: 'transparent', danger: colors.danger }[variant];
   const pressedBackground = {
     primary: colors.primaryPressed,
     secondary: colors.primarySoft,
     ghost: colors.surfaceMuted,
+    danger: colors.danger,
   }[variant];
-  const foreground = variant === 'primary' ? colors.onPrimary : colors.primary;
+  const foreground = variant === 'primary' || variant === 'danger' ? colors.onPrimary : colors.primary;
 
   return (
     <Pressable

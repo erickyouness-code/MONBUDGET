@@ -4,24 +4,27 @@
     "slug": "monbudget",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
+    "icon": "./assets/brand/icon.png",
     "userInterfaceStyle": "automatic",
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.monbudget.app"
+      "bundleIdentifier": "com.monbudget.app",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
-        "backgroundColor": "#0E7C66",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
+        "backgroundColor": "#5B4FE0",
+        "foregroundImage": "./assets/brand/android-foreground.png",
+        "backgroundImage": "./assets/brand/android-background.png",
+        "monochromeImage": "./assets/brand/android-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
       "package": "com.monbudget.app"
     },
     "web": {
-      "favicon": "./assets/favicon.png",
+      "favicon": "./assets/brand/favicon.png",
       "output": "single"
     },
     "plugins": [
@@ -33,7 +36,32 @@
         }
       ],
       "expo-font",
-      "expo-secure-store"
+      "expo-secure-store",
+      "expo-sharing",
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "MonBudget utilise Face ID pour protéger l’accès à vos données financières."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#5B4FE0"
+        }
+      ],
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/brand/splash-icon.png",
+          "imageWidth": 96,
+          "backgroundColor": "#F6F6FB",
+          "dark": {
+            "image": "./assets/brand/splash-icon.png",
+            "backgroundColor": "#0E0D1A"
+          }
+        }
+      ]
     ],
     "scheme": "monbudget"
   }

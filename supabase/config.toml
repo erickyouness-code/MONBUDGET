@@ -12,3 +12,7 @@ verify_jwt = true
 # Assistant : appelé avec le jeton de l'utilisateur connecté.
 [functions.assistant]
 verify_jwt = true
+
+# Suppression du compte : jeton de l'utilisateur + mot de passe redemandé.
+[functions.delete-account]
+verify_jwt = true
