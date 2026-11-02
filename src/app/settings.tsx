@@ -8,8 +8,12 @@ import { Linking, Switch, View } from 'react-native';
 import { useAccounts } from '@/features/accounts/api';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useCurrency, useUpdateProfile } from '@/features/profile/api';
+import { useEntitlement, useSyncEntitlement } from '@/features/subscription/api';
+import { statusLine } from '@/features/subscription/logic';
+import { openManageSubscription, restore } from '@/features/subscription/purchases';
+import { useLanguage , deviceLanguageCode } from '@/shared/i18n';
+import { formatDayShort } from '@/shared/lib/dates';
 import { CURRENCY_CODES, type CurrencyCode } from '@/shared/config/currencies';
-import { deviceLanguageCode } from '@/shared/i18n';
 import { LANGUAGES, LANGUAGE_NATIVE_NAMES, resolveLanguage, type Language } from '@/shared/i18n/languages';
 import { useChangeLanguage } from '@/shared/i18n/useChangeLanguage';
 import { getNotificationAccess, requestNotificationAccess, type NotificationAccess } from '@/shared/lib/notifications';
@@ -31,6 +35,22 @@ export default function SettingsScreen() {
   const updateProfile = useUpdateProfile();
   const changeLanguage = useChangeLanguage();
   const [signingOut, setSigningOut] = useState(false);
+  const uiLanguage = useLanguage();
+  const entitlement = useEntitlement();
+  const syncEntitlement = useSyncEntitlement();
+  const [restoring, setRestoring] = useState(false);
+  const status = entitlement.data ? statusLine(entitlement.data) : null;
+  const statusText = !status
+    ? '…'
+    : status.key === 'trial'
+      ? t(status.willRenew ? 'settings.subTrial' : 'settings.subTrialCancelled', { date: formatDayShort(status.date, uiLanguage) })
+      : status.key === 'renews'
+        ? t('settings.subRenews', { date: formatDayShort(status.date, uiLanguage) })
+        : status.key === 'endsOn'
+          ? t('settings.subEndsOn', { date: formatDayShort(status.date, uiLanguage) })
+          : status.key === 'expired'
+            ? t('settings.subExpired')
+            : t('settings.subNone');
   const notificationsOn = usePreferences((s) => s.notifications);
   const setNotifications = usePreferences((s) => s.setNotifications);
   const [access, setAccess] = useState<NotificationAccess>('undetermined');
@@ -77,6 +97,32 @@ export default function SettingsScreen() {
             </AppText>
           </View>
           <Button label={t('settings.signOut')} icon={LogOut} variant="secondary" loading={signingOut} onPress={signOut} />
+        </Card>
+      </Section>
+
+      <Section title={t('settings.subscription')}>
+        <Card style={{ gap: spacing.md }}>
+          <AppText variant="bodyStrong">{statusText}</AppText>
+          {entitlement.data?.billingIssue ? <Banner tone="error" message={t('settings.billingIssue')} /> : null}
+          {entitlement.data?.active ? (
+            <Button label={t('settings.manageSubscription')} variant="secondary" onPress={() => void openManageSubscription()} />
+          ) : (
+            <Button label={t('settings.seeOffer')} variant="secondary" onPress={() => router.back()} />
+          )}
+          <Button
+            label={t('premium.restore')}
+            variant="ghost"
+            loading={restoring}
+            onPress={async () => {
+              setRestoring(true);
+              await restore();
+              await syncEntitlement();
+              setRestoring(false);
+            }}
+          />
+          <AppText variant="small" color="textTertiary">
+            {t('settings.cancelHint')}
+          </AppText>
         </Card>
       </Section>
 

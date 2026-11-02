@@ -10,6 +10,7 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
 import { useProfile } from '@/features/profile/api';
+import { useEntitlement, useSubscriptionLifecycle } from '@/features/subscription/api';
 import i18n, { applyLayoutDirection, deviceLanguageCode, useIsRTL } from '@/shared/i18n';
 import { resolveLanguage } from '@/shared/i18n/languages';
 import { queryClient } from '@/shared/lib/queryClient';
@@ -67,7 +68,8 @@ function CloseButton() {
  * Aiguillage principal :
  * - pas connecté          → écrans de connexion
  * - connecté, sans profil → premier paramétrage
- * - connecté et paramétré → application
+ * - paramétré sans abonnement actif → page Premium
+ * - abonnement (ou essai) actif → application
  */
 function RootNavigator() {
   const { t } = useTranslation();
@@ -75,11 +77,16 @@ function RootNavigator() {
   const isArabic = useIsRTL();
   const { session, initializing, navigationHeld } = useAuth();
   const profile = useProfile();
+  const entitlement = useEntitlement();
+  useSubscriptionLifecycle();
 
   const signedIn = !!session && !navigationHeld;
   const onboarded = !!profile.data?.onboarding_completed_at;
+  // L'accès est décidé par le SERVEUR (table entitlements écrite par RevenueCat).
+  const premium = entitlement.data?.active === true;
   const waitingForProfile = signedIn && profile.isPending;
-  const ready = !initializing && !waitingForProfile;
+  const waitingForEntitlement = signedIn && onboarded && entitlement.isPending;
+  const ready = !initializing && !waitingForProfile && !waitingForEntitlement;
 
   useEffect(() => {
     if (ready) void SplashScreen.hideAsync();
@@ -88,14 +95,14 @@ function RootNavigator() {
   if (!ready) return null;
 
   // Profil impossible à charger (réseau coupé…) : on le dit et on propose de réessayer.
-  if (signedIn && profile.isError) {
+  if ((signedIn && profile.isError) || (signedIn && onboarded && entitlement.isError && !entitlement.data)) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.background, padding: 24 }}>
         <EmptyState
           icon={CloudOff}
           title={t('errors.loadTitle')}
           message={t('errors.loadMessage')}
-          action={<Button label={t('errors.retry')} onPress={() => void profile.refetch()} />}
+          action={<Button label={t('errors.retry')} onPress={() => void Promise.all([profile.refetch(), entitlement.refetch()])} />}
         />
       </View>
     );
@@ -111,7 +118,7 @@ function RootNavigator() {
   };
 
   // Écran vers lequel rediriger quand on tente d'ouvrir une zone non autorisée.
-  const home = !signedIn ? '/welcome' : onboarded ? '/' : '/setup';
+  const home = !signedIn ? '/welcome' : !onboarded ? '/setup' : premium ? '/' : '/premium';
 
   return (
     <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
@@ -121,10 +128,16 @@ function RootNavigator() {
       <Stack.Protected guard={signedIn && !onboarded} redirectTo={home}>
         <Stack.Screen name="(onboarding)" />
       </Stack.Protected>
+      <Stack.Protected guard={signedIn && onboarded && !premium} redirectTo={home}>
+        <Stack.Screen name="(paywall)" />
+      </Stack.Protected>
+      {/* Réglages : accessibles avec ou sans abonnement (langue, déconnexion, données). */}
       <Stack.Protected guard={signedIn && onboarded} redirectTo={home}>
+        <Stack.Screen name="settings" options={{ ...modalOptions, title: t('settings.title') }} />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && onboarded && premium} redirectTo={home}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="add" options={{ ...modalOptions, title: t('add.title') }} />
-        <Stack.Screen name="settings" options={{ ...modalOptions, title: t('settings.title') }} />
         <Stack.Screen name="transaction/[id]" options={{ ...modalOptions, title: t('transactions.editTitle') }} />
         <Stack.Screen name="accounts" options={{ ...modalOptions, title: t('accounts.title') }} />
         <Stack.Screen name="budgets" options={{ ...modalOptions, title: t('budgets.title') }} />

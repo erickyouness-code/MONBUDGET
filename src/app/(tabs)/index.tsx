@@ -30,6 +30,8 @@ import { demoBudgets } from '@/features/dashboard/demoData';
 import { canGoForward, computeChange, savingsRate, shiftMonth } from '@/features/dashboard/logic';
 import { useDashboardData } from '@/features/dashboard/useDashboardData';
 import { useProfile } from '@/features/profile/api';
+import { useEntitlement } from '@/features/subscription/api';
+import { openManageSubscription } from '@/features/subscription/purchases';
 import { toISODate } from '@/features/transactions/logic';
 import { toYearMonth } from '@/shared/lib/dates';
 import { useTheme } from '@/shared/theme/ThemeProvider';
@@ -51,6 +53,7 @@ export default function DashboardScreen() {
   const data = useDashboardData(month);
 
   const isCurrentMonth = !canGoForward(month);
+  const billingIssue = useEntitlement().data?.billingIssue ?? false;
   const { insights } = useInsights();
   // Aperçu : les deux points les plus importants (hors simples repères).
   const highlights = insights.filter((i) => i.kind !== 'topCategories' && i.kind !== 'recurring').slice(0, 2);
@@ -115,6 +118,19 @@ export default function DashboardScreen() {
             {t('dashboard.demoBanner')}
           </AppText>
         </View>
+      ) : null}
+
+      {billingIssue ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => void openManageSubscription()}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm, backgroundColor: colors.expenseSoft, borderRadius: radius.md, padding: spacing.md }}
+        >
+          <TriangleAlert size={18} color={colors.danger} />
+          <AppText variant="caption" style={{ color: colors.danger, flex: 1 }}>
+            {t('settings.billingIssue')}
+          </AppText>
+        </Pressable>
       ) : null}
 
       <Animated.View entering={enter(0)}>

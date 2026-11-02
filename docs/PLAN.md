@@ -45,7 +45,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 | 5 | Objectifs d'épargne | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 6 | Calendrier financier + récurrences + rappels | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 7 | Analyse intelligente (règles) | ✅ Terminé (aucune modification de la base) |
-| 8 | Abonnement (RevenueCat, essai, page Premium, webhook) | À faire |
+| 8 | Abonnement (RevenueCat, essai, page Premium, webhook) | ✅ Code terminé — mise en service : `docs/ABONNEMENT.md` |
 | 9 | Assistant conversationnel | À faire |
 | 10 | Finitions : export, suppression, biométrie, hors-ligne, publication | À faire |
 
@@ -138,6 +138,20 @@ des transactions des 4 derniers mois, des budgets, des soldes et du calendrier :
 - Chaque analyse explique « Comment est-ce calculé ? » ; mention « pas un conseil professionnel ».
 - Sans données suffisantes (10 transactions, 14 jours), l'application le dit au lieu de deviner.
 
+## Étape 8 — détails
+
+- Table `entitlements` (droit d'accès) écrite **uniquement par le serveur** ; `has_premium()` ;
+  règles RLS restrictives : sans abonnement actif, aucune création ni modification (transactions,
+  budgets, objectifs, calendrier, catégories) ; lecture, suppression et comptes restent possibles.
+- Fonctions Edge : `revenuecat-webhook` (secret partagé, comparaison à durée constante, journal
+  anti-doublon) et `sync-entitlement` (utilisateur connecté uniquement). Les deux redemandent l'état
+  officiel à RevenueCat au lieu de croire le message reçu.
+- Application : RevenueCat (`react-native-purchases`, mode aperçu dans Expo Go), page Premium,
+  essai affiché seulement s'il est confirmé par le store et jamais utilisé, restauration des achats,
+  gestion / annulation, statut dans les réglages, bandeau en cas de problème de paiement,
+  retour automatique à la page Premium à l'expiration.
+- Configuration EAS (`eas.json`), `expo-dev-client`, identifiant `com.monbudget.app`.
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
@@ -147,5 +161,6 @@ des transactions des 4 derniers mois, des budgets, des soldes et du calendrier :
 - L'analyse n'est pas disponible en mode démonstration (elle n'utilise que vos vraies données).
 - Les alertes de budget s'affichent dans l'application (pas de notification du téléphone pour elles).
 - Les notifications n'ont pas encore été testées sur un vrai téléphone (impossible depuis cet environnement).
+- L'abonnement n'a pas pu être testé avec de vrais stores (comptes Apple / Google / RevenueCat requis).
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)
   sera nécessaire à partir de l'étape 8.

@@ -50,6 +50,8 @@ const check = (name, ok) => { checks.push(`${ok ? '✔' : '✘'} ${name}`); if (
       if (req.method() === 'PATCH') { server.patchBody = body; Object.assign(server.profile, body); }
       return json(200, server.profile);
     }
+    // Étape 8 : essai en cours (droit d'accès écrit par le serveur).
+    if (url.pathname === '/rest/v1/entitlements') return json(200, [{ period_type: 'trial', expires_at: '2099-01-01T00:00:00Z', will_renew: true, billing_issue: false, store: 'app_store' }]);
     return json(404, { msg: 'not mocked' });
   });
 

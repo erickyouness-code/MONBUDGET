@@ -41,6 +41,10 @@ function createDb({ onboarded = false } = {}) {
     contributions: [],
     scheduled: [],
     completions: [],
+    // Droit d'accès (écrit par le serveur). Par défaut : actif, pour les parcours non liés à l'abonnement.
+    entitlement: { period_type: 'normal', expires_at: '2099-01-01T00:00:00Z', will_renew: true, billing_issue: false, store: 'app_store' },
+    syncCalls: 0,
+    onSync: null,
     categories: SYSTEM_CATEGORIES.map(([kind, key, sort_order, color]) => ({ id: uid(), user_id: null, kind, key, name: null, icon: key, color, sort_order, is_archived: false })),
   };
   db.category = (key) => db.categories.find((c) => c.key === key).id;
@@ -205,6 +209,16 @@ async function installMock(page, db) {
     }
     if (p === '/rest/v1/account_balances') return json(200, db.balances());
     if (p === '/rest/v1/goal_progress') return json(200, db.goalProgress());
+    if (p === '/rest/v1/entitlements') {
+      const row = db.entitlement;
+      if (single) return row ? json(200, row) : json(406, { code: 'PGRST116', message: 'no rows' });
+      return json(200, row ? [row] : []);
+    }
+    if (p === '/functions/v1/sync-entitlement') {
+      db.syncCalls++;
+      if (db.onSync) db.onSync();
+      return json(200, { active: !!db.entitlement && Date.parse(db.entitlement.expires_at) > Date.now() });
+    }
     if (p === '/rest/v1/rpc/complete_occurrence') { const r = db.complete(body); return json(r.status, r.body); }
     if (p === '/rest/v1/rpc/undo_occurrence') { db.undo(body.p_completion_id); return empty(204); }
     if (p === '/rest/v1/scheduled_completions') return json(200, db.completions);

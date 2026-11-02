@@ -9,6 +9,9 @@ insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'a@example.com'),
   ('00000000-0000-0000-0000-0000000000b2', 'b@example.com');
 
+-- Étape 8 : ces utilisateurs de test ont un abonnement actif (les écritures l'exigent).
+insert into public.entitlements (user_id, expires_at) select id, now() + interval '30 days' from auth.users;
+
 -- Comptes créés « il y a longtemps » pour que leur solde initial compte dans l'historique.
 insert into public.accounts (id, user_id, name, type, currency_code, initial_balance_minor, created_at) values
   ('aaaaaaaa-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'Espèces', 'cash', 'MAD', 100000, '2026-01-01'),

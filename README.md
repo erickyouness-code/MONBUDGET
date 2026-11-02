@@ -38,6 +38,7 @@ Sans configuration, l'application s'ouvre en « mode développement » (connexio
 | `npm run lint` | Vérifie la qualité du code |
 | `npm run test:db` | Teste la base et les règles de sécurité (PostgreSQL requis) |
 | `npm run test:e2e` | Parcours complets dans un navigateur, avec un serveur simulé |
+| `npm run test:functions` | Exécute la fonction serveur du webhook d'abonnement (Deno requis, sinon téléchargé) |
 
 ## Organisation du code
 

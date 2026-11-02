@@ -1,0 +1,10 @@
+# Configuration minimale pour la CLI Supabase (déploiement des fonctions).
+project_id = "monbudget"
+
+# RevenueCat s'authentifie avec un secret partagé, pas avec un jeton Supabase.
+[functions.revenuecat-webhook]
+verify_jwt = false
+
+# L'application appelle cette fonction avec le jeton de l'utilisateur connecté.
+[functions.sync-entitlement]
+verify_jwt = true
