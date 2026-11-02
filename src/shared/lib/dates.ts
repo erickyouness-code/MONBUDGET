@@ -43,8 +43,10 @@ export function formatMonthLong(date: Date, language: Language): string {
   return label.charAt(0).toUpperCase() + label.slice(1);
 }
 
-/** "3 nov." */
-export function formatDayShort(isoDate: string, language: Language): string {
+/** "3 nov." — avec l'année si elle diffère de l'année en cours ("11 mai 2027"). */
+export function formatDayShort(isoDate: string, language: Language, now = new Date()): string {
   const date = new Date(`${isoDate}T12:00:00`);
-  return safeFormat(date, language, { day: 'numeric', month: 'short' }, isoDate);
+  const options: Intl.DateTimeFormatOptions =
+    date.getFullYear() === now.getFullYear() ? { day: 'numeric', month: 'short' } : { day: 'numeric', month: 'short', year: 'numeric' };
+  return safeFormat(date, language, options, isoDate);
 }

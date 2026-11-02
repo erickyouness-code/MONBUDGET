@@ -141,7 +141,7 @@ export function SavingsCard({ data }: Props) {
       <SectionCard title={t('dashboard.savings')}>
         <EmptyHint
           text={t('dashboard.emptySavings')}
-          action={<Button label={t('dashboard.createGoal')} variant="secondary" icon={Plus} onPress={() => router.push('/plan')} />}
+          action={<Button label={t('dashboard.createGoal')} variant="secondary" icon={Plus} onPress={() => router.push('/goal/edit/new')} />}
         />
       </SectionCard>
     );
@@ -150,7 +150,15 @@ export function SavingsCard({ data }: Props) {
   const progress = goal.targetMinor > 0 ? goal.currentMinor / goal.targetMinor : 0;
 
   return (
-    <SectionCard title={t('dashboard.savings')} accessory={<Chip label={goal.name} />}>
+    <SectionCard
+      title={t('dashboard.savings')}
+      accessory={data.isDemo ? <Chip label={goal.name} /> : <TextLink label={t('common.seeAll')} onPress={() => router.push('/goals')} />}
+    >
+      {!data.isDemo ? (
+        <AppText variant="caption" color="textSecondary" numberOfLines={1}>
+          {goal.name}
+        </AppText>
+      ) : null}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xl }}>
         <ProgressRing progress={progress} size={112} thickness={14}>
           <AppText variant="headline">{Math.floor(progress * 100)}%</AppText>

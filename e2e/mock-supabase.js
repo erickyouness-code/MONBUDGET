@@ -37,6 +37,8 @@ function createDb({ onboarded = false } = {}) {
     accounts: [],
     transactions: [],
     budgets: [],
+    goals: [],
+    contributions: [],
     categories: SYSTEM_CATEGORIES.map(([kind, key, sort_order, color]) => ({ id: uid(), user_id: null, kind, key, name: null, icon: key, color, sort_order, is_archived: false })),
   };
   db.category = (key) => db.categories.find((c) => c.key === key).id;
@@ -97,6 +99,23 @@ function createDb({ onboarded = false } = {}) {
           .reduce((a, t) => a + t.amount_minor, 0),
       }));
   };
+  // Objectifs : même calcul que la vue goal_progress.
+  db.addGoal = (g) => { const row = { id: uid(), icon: 'piggy', target_date: null, currency_code: 'MAD', is_archived: false, created_at: new Date().toISOString(), ...g }; db.goals.push(row); return row; };
+  db.addContribution = (c) => { const row = { id: uid(), note: null, is_initial: false, created_at: new Date(Date.now() + seq).toISOString(), occurred_on: db.today || new Date().toISOString().slice(0, 10), ...c }; db.contributions.push(row); return row; };
+  db.saved = (goalId) => db.contributions.filter((c) => c.goal_id === goalId).reduce((a, c) => a + c.amount_minor, 0);
+  db.goalProgress = () => {
+    const today = db.today || new Date().toISOString().slice(0, 10);
+    const limit = new Date(Date.parse(`${today}T00:00:00Z`) - 90 * 86400000).toISOString().slice(0, 10);
+    return db.goals.map((g) => {
+      const list = db.contributions.filter((c) => c.goal_id === g.id);
+      return {
+        goal_id: g.id,
+        saved_minor: list.reduce((a, c) => a + c.amount_minor, 0),
+        saved_last_90_minor: list.filter((c) => c.occurred_on > limit && !c.is_initial).reduce((a, c) => a + c.amount_minor, 0),
+        last_contribution_on: list.map((c) => c.occurred_on).sort().pop() ?? null,
+      };
+    });
+  };
   return db;
 }
 
@@ -152,6 +171,34 @@ async function installMock(page, db) {
       return empty(204);
     }
     if (p === '/rest/v1/account_balances') return json(200, db.balances());
+    if (p === '/rest/v1/goal_progress') return json(200, db.goalProgress());
+    if (p === '/rest/v1/savings_goals') {
+      if (method === 'POST') {
+        const row = db.addGoal({ ...body, created_at: `${db.today || new Date().toISOString().slice(0, 10)}T10:00:00Z` });
+        return single ? json(201, { id: row.id }) : empty(201);
+      }
+      const target = applyFilters(db.goals, params);
+      if (method === 'PATCH') { target.forEach((g) => Object.assign(g, body)); return empty(204); }
+      if (method === 'DELETE') {
+        db.contributions = db.contributions.filter((c) => !target.some((g) => g.id === c.goal_id));
+        db.goals = db.goals.filter((g) => !target.includes(g));
+        return empty(204);
+      }
+      return json(200, target);
+    }
+    if (p === '/rest/v1/goal_contributions') {
+      if (method === 'POST') {
+        for (const r of [].concat(body)) {
+          if (db.saved(r.goal_id) + r.amount_minor < 0) return json(400, { code: '23514', message: 'Le retrait dépasse le montant épargné' });
+          db.addContribution(r);
+        }
+        return empty(201);
+      }
+      const sorted = [...db.contributions].sort((a, b) => (b.occurred_on + b.created_at).localeCompare(a.occurred_on + a.created_at));
+      const target = applyFilters(sorted, params);
+      if (method === 'DELETE') { db.contributions = db.contributions.filter((c) => !target.includes(c)); return empty(204); }
+      return json(200, target);
+    }
     if (p === '/rest/v1/categories') {
       if (method === 'POST') {
         const row = { id: db.uid(), user_id: USER_ID, key: null, color: null, is_archived: false, ...body };

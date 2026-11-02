@@ -43,6 +43,7 @@ export type DashboardData = {
   /** Revenus et dépenses par mois, sur 6 mois. */
   monthly: { month: YearMonth; incomeMinor: number; expensesMinor: number }[];
   expensesByCategory: { id: string; label: string; amountMinor: number }[];
+  /** Objectif mis en avant : le plus proche de son échéance parmi ceux non atteints. */
   savingsGoal: { name: string; targetMinor: number; currentMinor: number } | null;
   subscriptions: { id: string; name: string; icon: LucideIcon; amountMinor: number; dayOfMonth: number }[];
   recentTransactions: {

@@ -5,6 +5,7 @@ import { View } from 'react-native';
 
 import { monthStart, useBudgetStatus } from '@/features/budgets/api';
 import { budgetLevel } from '@/features/budgets/logic';
+import { useGoals } from '@/features/goals/api';
 import { useTheme } from '@/shared/theme/ThemeProvider';
 import { Card, ListRow, Screen } from '@/shared/ui';
 
@@ -13,6 +14,13 @@ export default function PlanScreen() {
   const { colors } = useTheme();
   const soon = t('common.comingSoon');
   const budgets = useBudgetStatus(monthStart());
+  const goals = useGoals();
+  const activeGoals = (goals.data ?? []).filter((g) => !g.is_archived);
+  const reachedGoals = activeGoals.filter((g) => g.savedMinor >= g.target_minor).length;
+  const goalsSummary =
+    activeGoals.length === 0
+      ? t('plan.goalsDescription')
+      : t('plan.goalsSummary', { count: activeGoals.length, reached: reachedGoals });
 
   const count = budgets.data?.length ?? 0;
   const alerts = (budgets.data ?? []).filter((b) => budgetLevel(b) !== 'ok').length;
@@ -28,7 +36,7 @@ export default function PlanScreen() {
       <Card style={{ paddingVertical: 4 }}>
         <ListRow icon={Wallet} title={t('plan.budgets')} description={summary} onPress={() => router.push('/budgets')} />
         <View style={{ height: 1, backgroundColor: colors.border }} />
-        <ListRow icon={PiggyBank} title={t('plan.goals')} description={t('plan.goalsDescription')} badge={soon} />
+        <ListRow icon={PiggyBank} title={t('plan.goals')} description={goalsSummary} onPress={() => router.push('/goals')} />
         <View style={{ height: 1, backgroundColor: colors.border }} />
         <ListRow icon={CalendarDays} title={t('plan.calendar')} description={t('plan.calendarDescription')} badge={soon} />
       </Card>

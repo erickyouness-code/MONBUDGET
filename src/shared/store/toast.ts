@@ -6,7 +6,7 @@ export type Toast = {
   title: string;
   message: string;
   /** Écran à ouvrir si l'utilisateur touche le message. */
-  href?: '/budgets';
+  href?: '/budgets' | '/goals';
 };
 
 type ToastState = {

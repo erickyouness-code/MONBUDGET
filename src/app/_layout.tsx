@@ -128,6 +128,22 @@ function RootNavigator() {
         <Stack.Screen name="transaction/[id]" options={{ ...modalOptions, title: t('transactions.editTitle') }} />
         <Stack.Screen name="accounts" options={{ ...modalOptions, title: t('accounts.title') }} />
         <Stack.Screen name="budgets" options={{ ...modalOptions, title: t('budgets.title') }} />
+        <Stack.Screen name="goals" options={{ ...modalOptions, title: t('goals.title') }} />
+        <Stack.Screen name="goal/[id]" options={{ ...modalOptions, title: t('goals.detailTitle') }} />
+        <Stack.Screen
+          name="goal/edit/[id]"
+          options={({ route }) => ({
+            ...modalOptions,
+            title: (route.params as { id?: string } | undefined)?.id === 'new' ? t('goals.newTitle') : t('goals.editTitle'),
+          })}
+        />
+        <Stack.Screen
+          name="goal/contribute/[id]"
+          options={({ route }) => ({
+            ...modalOptions,
+            title: (route.params as { mode?: string } | undefined)?.mode === 'withdraw' ? t('goals.withdraw') : t('goals.deposit'),
+          })}
+        />
         <Stack.Screen
           name="budget/[key]"
           options={({ route }) => ({

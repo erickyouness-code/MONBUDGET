@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { useAccounts } from '@/features/accounts/api';
 import { useCategories } from '@/features/categories/api';
 import { categoryIcon, categoryLabel } from '@/features/categories/meta';
+import { useGoals } from '@/features/goals/api';
 import { useCurrency } from '@/features/profile/api';
 import { useMonthlyOverview, useRecentTransactions, useTransactionsInRange } from '@/features/transactions/api';
 import { summarize } from '@/features/transactions/logic';
@@ -34,6 +35,7 @@ export function useDashboardData(month: Date): DashboardData {
   const accounts = useAccounts();
   const recent = useRecentTransactions(4);
   const categories = useCategories();
+  const goals = useGoals();
 
   return useMemo((): DashboardData => {
     if (demoMode) return buildDemoDashboard(currency, t, comparison, month);
@@ -93,7 +95,7 @@ export function useDashboardData(month: Date): DashboardData {
       balanceHistory: usefulMonths.length >= 2 ? usefulMonths.map((m) => ({ month: m.month, balanceMinor: m.endBalanceMinor })) : [],
       monthly: usefulMonths.map((m) => ({ month: m.month, incomeMinor: m.incomeMinor, expensesMinor: m.expensesMinor })),
       expensesByCategory,
-      savingsGoal: null, // étape 5
+      savingsGoal: featuredGoal(goals.data),
       subscriptions: [], // étape 6
       recentTransactions,
     };
@@ -114,5 +116,21 @@ export function useDashboardData(month: Date): DashboardData {
     accounts.isPending,
     recent.data,
     categories.data,
+    goals.data,
   ]);
+}
+
+/** Objectif à mettre en avant : non atteint, échéance la plus proche (sinon le plus récent). */
+function featuredGoal(goals: ReturnType<typeof useGoals>['data']): DashboardData['savingsGoal'] {
+  const open = (goals ?? []).filter((g) => !g.is_archived && g.savedMinor < g.target_minor);
+  const pool = open.length > 0 ? open : (goals ?? []).filter((g) => !g.is_archived);
+  if (pool.length === 0) return null;
+  const sorted = [...pool].sort((a, b) => {
+    if (a.target_date && b.target_date) return a.target_date.localeCompare(b.target_date);
+    if (a.target_date) return -1;
+    if (b.target_date) return 1;
+    return b.created_at.localeCompare(a.created_at);
+  });
+  const g = sorted[0]!;
+  return { name: g.name, targetMinor: g.target_minor, currentMinor: g.savedMinor };
 }

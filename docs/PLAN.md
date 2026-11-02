@@ -42,7 +42,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 | 2 | Comptes + transactions (CRUD, recherche, transferts, catégories) | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 3 | Tableau de bord + graphiques | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 4 | Budgets + alertes | ✅ Code terminé — à brancher sur votre projet Supabase |
-| 5 | Objectifs d'épargne | À faire |
+| 5 | Objectifs d'épargne | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 6 | Calendrier financier + récurrences + rappels | À faire |
 | 7 | Analyse intelligente (règles) | À faire |
 | 8 | Abonnement (RevenueCat, essai, page Premium, webhook) | À faire |
@@ -95,12 +95,24 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
   et bandeau « Budgets à surveiller » sur le tableau de bord.
 - Calculs faits par la base (`budget_status`, `set_budget`), protégés par RLS.
 
+## Étape 5 — détails
+
+- Objectifs : nom, icône, montant cible, date limite (facultative), montant déjà épargné.
+- Versements et retraits ; un objectif ne peut jamais passer en négatif (règle en base).
+- Plan d'épargne : montant **par mois** et **par semaine** pour tenir l'échéance (arrondi vers le haut).
+- Estimation de la date d'atteinte au rythme des 90 derniers jours, montant de départ exclu ;
+  aucune estimation avec moins de 14 jours d'historique. Badges : en bonne voie, en retard,
+  échéance dépassée, atteint (avec félicitations).
+- Les versements suivent l'épargne sans modifier le solde des comptes (choix à confirmer).
+- Les dates hors de l'année en cours affichent l'année.
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
   l'application sur iOS et Android. L'application prévient l'utilisateur et redémarre seule.
 - Le solde initial d'un compte ne peut pas encore être négatif depuis l'écran (la base l'accepte).
-- L'épargne et les abonnements du tableau de bord arrivent aux étapes 5 et 6.
+- Les abonnements du tableau de bord arrivent à l'étape 6.
+- Les versements d'épargne ne sont pas liés automatiquement à un transfert entre comptes.
 - Les alertes de budget s'affichent dans l'application ; les notifications du téléphone arriveront à l'étape 6.
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)
   sera nécessaire à partir de l'étape 8.
