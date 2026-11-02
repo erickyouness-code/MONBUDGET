@@ -1,5 +1,10 @@
 # Configurer Supabase (étape 1)
 
+> **Le plus simple :** une fois le projet créé sur supabase.com, lancez sur votre ordinateur
+> `bash scripts/mise-en-service.sh`. Le script crée les tables, enregistre vos clés secrètes dans
+> Supabase (saisie masquée), déploie les fonctions et prépare `.env.local`. Les étapes manuelles
+> ci-dessous restent valables si vous préférez l'éditeur SQL.
+
 Durée : environ 15 minutes. Aucune connaissance technique particulière n'est nécessaire.
 
 ## 1. Créer le projet

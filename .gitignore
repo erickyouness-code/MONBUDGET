@@ -46,3 +46,4 @@ yarn-error.*
 
 # captures des tests de parcours
 e2e/screenshots/
+.env.local.nouveau

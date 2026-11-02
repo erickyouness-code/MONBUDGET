@@ -24,7 +24,8 @@ Sinon, lancez `npx expo start --tunnel`.
 
 ## Brancher le serveur (Supabase)
 
-Suivez le guide pas à pas : [docs/SUPABASE.md](docs/SUPABASE.md).
+Suivez le guide pas à pas : [docs/SUPABASE.md](docs/SUPABASE.md), ou lancez `bash scripts/mise-en-service.sh`
+(tables, clés secrètes, fonctions serveur et `.env.local` en une seule commande).
 Sans configuration, l'application s'ouvre en « mode développement » (connexion impossible).
 
 ## Commandes utiles
