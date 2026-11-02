@@ -1,0 +1,129 @@
+import { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, useFonts } from '@expo-google-fonts/inter';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { router, SplashScreen, Stack } from 'expo-router';
+import { CloudOff, X } from 'lucide-react-native';
+import { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Pressable, View } from 'react-native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+
+import { AuthProvider, useAuth } from '@/features/auth/AuthProvider';
+import { useProfile } from '@/features/profile/api';
+import i18n, { applyLayoutDirection, deviceLanguageCode, useIsRTL } from '@/shared/i18n';
+import { resolveLanguage } from '@/shared/i18n/languages';
+import { queryClient } from '@/shared/lib/queryClient';
+import { usePreferences } from '@/shared/store/preferences';
+import { useHydrated } from '@/shared/store/useHydrated';
+import { AppThemeProvider, useTheme } from '@/shared/theme/ThemeProvider';
+import { Button, EmptyState } from '@/shared/ui';
+
+void SplashScreen.preventAutoHideAsync();
+
+export default function RootLayout() {
+  const hydrated = useHydrated();
+  const [languageReady, setLanguageReady] = useState(false);
+  const [fontsLoaded, fontError] = useFonts({ Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold });
+
+  // Au démarrage : on applique la langue mémorisée avant d'afficher l'interface.
+  useEffect(() => {
+    if (!hydrated) return;
+    const language = resolveLanguage(usePreferences.getState().language, deviceLanguageCode());
+    applyLayoutDirection(language);
+    void i18n.changeLanguage(language).then(() => setLanguageReady(true));
+  }, [hydrated]);
+
+  // Si la police ne se charge pas, on continue avec celle du système.
+  if (!languageReady || (!fontsLoaded && !fontError)) return null;
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AppThemeProvider>
+              <RootNavigator />
+            </AppThemeProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+function CloseButton() {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={t('common.close')} hitSlop={12} onPress={() => router.back()}>
+      <X size={22} color={colors.text} />
+    </Pressable>
+  );
+}
+
+/**
+ * Aiguillage principal :
+ * - pas connecté          → écrans de connexion
+ * - connecté, sans profil → premier paramétrage
+ * - connecté et paramétré → application
+ */
+function RootNavigator() {
+  const { t } = useTranslation();
+  const { colors } = useTheme();
+  const isArabic = useIsRTL();
+  const { session, initializing, navigationHeld } = useAuth();
+  const profile = useProfile();
+
+  const signedIn = !!session && !navigationHeld;
+  const onboarded = !!profile.data?.onboarding_completed_at;
+  const waitingForProfile = signedIn && profile.isPending;
+  const ready = !initializing && !waitingForProfile;
+
+  useEffect(() => {
+    if (ready) void SplashScreen.hideAsync();
+  }, [ready]);
+
+  if (!ready) return null;
+
+  // Profil impossible à charger (réseau coupé…) : on le dit et on propose de réessayer.
+  if (signedIn && profile.isError) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', backgroundColor: colors.background, padding: 24 }}>
+        <EmptyState
+          icon={CloudOff}
+          title={t('errors.loadTitle')}
+          message={t('errors.loadMessage')}
+          action={<Button label={t('errors.retry')} onPress={() => void profile.refetch()} />}
+        />
+      </View>
+    );
+  }
+
+  const modalOptions = {
+    presentation: 'modal' as const,
+    headerShown: true,
+    headerShadowVisible: false,
+    headerStyle: { backgroundColor: colors.background },
+    headerTitleStyle: { color: colors.text, fontFamily: isArabic ? undefined : 'Inter_600SemiBold' },
+    headerRight: () => <CloseButton />,
+  };
+
+  // Écran vers lequel rediriger quand on tente d'ouvrir une zone non autorisée.
+  const home = !signedIn ? '/welcome' : onboarded ? '/' : '/setup';
+
+  return (
+    <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
+      <Stack.Protected guard={!signedIn} redirectTo={home}>
+        <Stack.Screen name="(auth)" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && !onboarded} redirectTo={home}>
+        <Stack.Screen name="(onboarding)" />
+      </Stack.Protected>
+      <Stack.Protected guard={signedIn && onboarded} redirectTo={home}>
+        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="add" options={{ ...modalOptions, title: t('add.title') }} />
+        <Stack.Screen name="settings" options={{ ...modalOptions, title: t('settings.title') }} />
+      </Stack.Protected>
+    </Stack>
+  );
+}
