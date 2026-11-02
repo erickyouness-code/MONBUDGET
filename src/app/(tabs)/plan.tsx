@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { CalendarDays, PiggyBank, Wallet } from 'lucide-react-native';
+import { CalendarDays, ChartNoAxesColumnIncreasing, PiggyBank, Wallet } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { View } from 'react-native';
 
@@ -53,6 +53,8 @@ export default function PlanScreen() {
         <ListRow icon={PiggyBank} title={t('plan.goals')} description={goalsSummary} onPress={() => router.push('/goals')} />
         <View style={{ height: 1, backgroundColor: colors.border }} />
         <ListRow icon={CalendarDays} title={t('plan.calendar')} description={calendarSummary} onPress={() => router.push('/calendar')} />
+        <View style={{ height: 1, backgroundColor: colors.border }} />
+        <ListRow icon={ChartNoAxesColumnIncreasing} title={t('plan.insights')} description={t('plan.insightsDescription')} onPress={() => router.push('/insights')} />
       </Card>
     </Screen>
   );

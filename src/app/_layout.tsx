@@ -130,6 +130,7 @@ function RootNavigator() {
         <Stack.Screen name="budgets" options={{ ...modalOptions, title: t('budgets.title') }} />
         <Stack.Screen name="goals" options={{ ...modalOptions, title: t('goals.title') }} />
         <Stack.Screen name="calendar" options={{ ...modalOptions, title: t('schedule.title') }} />
+        <Stack.Screen name="insights" options={{ ...modalOptions, title: t('insights.title') }} />
         <Stack.Screen name="occurrence" options={{ ...modalOptions, title: t('schedule.occurrenceTitle') }} />
         <Stack.Screen
           name="scheduled/[id]"

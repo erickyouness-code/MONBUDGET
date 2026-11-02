@@ -21,9 +21,11 @@ import {
   UpcomingCard,
 } from '@/features/dashboard/components/Cards';
 import { ChangeBadge } from '@/features/dashboard/components/ChangeBadge';
+import { TextLink , StatTile } from '@/features/dashboard/components/parts';
+import { InsightCard } from '@/features/insights/InsightCard';
+import { useInsights } from '@/features/insights/useInsights';
 import { DashboardHeader } from '@/features/dashboard/components/DashboardHeader';
 import { BalanceHero, MonthSwitcher } from '@/features/dashboard/components/Overview';
-import { StatTile } from '@/features/dashboard/components/parts';
 import { demoBudgets } from '@/features/dashboard/demoData';
 import { canGoForward, computeChange, savingsRate, shiftMonth } from '@/features/dashboard/logic';
 import { useDashboardData } from '@/features/dashboard/useDashboardData';
@@ -49,6 +51,9 @@ export default function DashboardScreen() {
   const data = useDashboardData(month);
 
   const isCurrentMonth = !canGoForward(month);
+  const { insights } = useInsights();
+  // Aperçu : les deux points les plus importants (hors simples repères).
+  const highlights = insights.filter((i) => i.kind !== 'topCategories' && i.kind !== 'recurring').slice(0, 2);
   const budgetStatus = useBudgetStatus(toISODate(month));
   const categories = useCategories();
   const budgets = data.isDemo ? demoBudgets(data.currency) : (budgetStatus.data ?? []);
@@ -188,6 +193,18 @@ export default function DashboardScreen() {
             onEdit={() => router.push('/budgets')}
           />
         </Animated.View>
+      ) : null}
+
+      {isCurrentMonth && !data.isDemo && highlights.length > 0 ? (
+        <View style={{ gap: spacing.sm }}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+            <AppText variant="headline">{t('insights.preview')}</AppText>
+            <TextLink label={t('insights.seeAll')} onPress={() => router.push('/insights')} />
+          </View>
+          {highlights.map((insight, i) => (
+            <InsightCard key={`${insight.kind}-${i}`} insight={insight} currency={data.currency} compact />
+          ))}
+        </View>
       ) : null}
 
       <Animated.View entering={enter(2)}>

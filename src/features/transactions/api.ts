@@ -120,6 +120,32 @@ export function useMonthlyOverview(until: string, months = 6) {
   });
 }
 
+/** Revenus et dépenses depuis une date (pour l'analyse ; transferts exclus). */
+export function useAnalysisTransactions(from: string) {
+  const { session } = useAuth();
+  return useQuery({
+    queryKey: [...transactionsKey, 'analysis', from],
+    enabled: !!session,
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('transactions')
+        .select('type, amount_minor, occurred_on, category_id, description')
+        .in('type', ['expense', 'income'])
+        .gte('occurred_on', from)
+        .order('occurred_on')
+        .range(0, 19999);
+      if (error) throw error;
+      return (data ?? []).map((r) => ({ ...r, amount_minor: Number(r.amount_minor) })) as {
+        type: 'expense' | 'income';
+        amount_minor: number;
+        occurred_on: string;
+        category_id: string | null;
+        description: string | null;
+      }[];
+    },
+  });
+}
+
 export function useTransaction(id: string | undefined) {
   const { session } = useAuth();
   return useQuery({

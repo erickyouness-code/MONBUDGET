@@ -44,7 +44,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 | 4 | Budgets + alertes | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 5 | Objectifs d'épargne | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 6 | Calendrier financier + récurrences + rappels | ✅ Code terminé — à brancher sur votre projet Supabase |
-| 7 | Analyse intelligente (règles) | À faire |
+| 7 | Analyse intelligente (règles) | ✅ Terminé (aucune modification de la base) |
 | 8 | Abonnement (RevenueCat, essai, page Premium, webhook) | À faire |
 | 9 | Assistant conversationnel | À faire |
 | 10 | Finitions : export, suppression, biométrie, hors-ligne, publication | À faire |
@@ -121,12 +121,30 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 - Accueil : carte « Prochaines échéances » ; un revenu en retard s'affiche « Pas encore reçu ».
 - Accessibilité : les choix (pastilles, sélecteurs) sont annoncés « coché » aux lecteurs d'écran.
 
+## Étape 7 — détails
+
+Moteur de règles explicables (`src/features/insights/engine.ts`), calculé sur l'appareil à partir
+des transactions des 4 derniers mois, des budgets, des soldes et du calendrier :
+
+- Dépenses supérieures aux revenus ; taux d'épargne.
+- Budgets dépassés ou presque atteints.
+- Hausses / baisses par catégorie, à **période égale** (du 1er au même jour des mois précédents),
+  avec seuils de significativité ; les mois sans données n'entrent pas dans la moyenne ; aucune
+  comparaison avec moins de 2 mois d'historique.
+- Catégories les plus coûteuses ; petites dépenses qui s'additionnent.
+- Dépenses récurrentes détectées (≥ 3 mois sur 4, montants à ±15 %), avec « Ajouter au calendrier »
+  prérempli ; les achats fréquents (courses) ne sont pas pris pour des abonnements.
+- Fin de mois **estimée** (solde + échéances du calendrier), toujours présentée comme une estimation.
+- Chaque analyse explique « Comment est-ce calculé ? » ; mention « pas un conseil professionnel ».
+- Sans données suffisantes (10 transactions, 14 jours), l'application le dit au lieu de deviner.
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
   l'application sur iOS et Android. L'application prévient l'utilisateur et redémarre seule.
 - Le solde initial d'un compte ne peut pas encore être négatif depuis l'écran (la base l'accepte).
 - Les versements d'épargne ne sont pas liés automatiquement à un transfert entre comptes.
+- L'analyse n'est pas disponible en mode démonstration (elle n'utilise que vos vraies données).
 - Les alertes de budget s'affichent dans l'application (pas de notification du téléphone pour elles).
 - Les notifications n'ont pas encore été testées sur un vrai téléphone (impossible depuis cet environnement).
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)

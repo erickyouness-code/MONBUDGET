@@ -101,11 +101,11 @@ db.addTx({ type: 'expense', amount_minor: 99900, occurred_on: '2026-10-20', acco
   await page.getByRole('button', { name: 'Fermer' }).first().click();
   await wait(500);
   await addExpense('50', 'Transport'); // aucun budget franchi
-  check('pas d’alerte quand aucun seuil n’est franchi', !(await visible('Budget bientôt atteint')) && !(await visible('Budget dépassé')));
+  check('pas d’alerte quand aucun seuil n’est franchi', !(await page.getByText('Budget bientôt atteint', { exact: true }).locator('visible=true').count()) && !(await page.getByText('Budget dépassé', { exact: true }).locator('visible=true').count()));
   await addExpense('150', 'Alimentation'); // 750 / 700 = 107 %
   check('alerte « dépassé » à 107 %', (await visible('Budget dépassé')) && (await visible(/Alimentation : 107 %/)));
   await wait(6500); // le message disparaît seul
-  check('le message disparaît après quelques secondes', !(await visible('Budget dépassé')));
+  check('le message disparaît après quelques secondes', !(await page.getByText('Budget dépassé', { exact: true }).locator('visible=true').count()));
   check('tableau de bord : bandeau « Budgets à surveiller : Alimentation »', await visible('Budgets à surveiller : Alimentation'));
   await shot('s4-4-accueil-alerte');
 

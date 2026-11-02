@@ -1,4 +1,4 @@
-import { router } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { ListOrdered, Plus, Search, Wallet, X } from 'lucide-react-native';
 import { useDeferredValue, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
@@ -31,7 +31,10 @@ export default function HistoryScreen() {
   const accounts = useAccounts();
   const categories = useCategories();
 
-  const [search, setSearch] = useState('');
+  // Recherche saisie, sinon celle transmise par un autre écran (ex. « Voir les dépenses »).
+  const { q } = useLocalSearchParams<{ q?: string }>();
+  const [typed, setSearch] = useState<string | null>(null);
+  const search = typed ?? q ?? '';
   const [type, setType] = useState<TransactionType | 'all'>('all');
   const deferredSearch = useDeferredValue(search);
 

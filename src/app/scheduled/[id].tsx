@@ -31,7 +31,9 @@ export default function ScheduledItemScreen() {
   const { t } = useTranslation();
   const language = useLanguage();
   const { colors, spacing, radius } = useTheme();
-  const { id } = useLocalSearchParams<{ id: string }>();
+  // Paramètres facultatifs pour préremplir (ex. dépense récurrente détectée par l'analyse).
+  const prefill = useLocalSearchParams<{ id: string; title?: string; amount?: string; categoryId?: string; day?: string }>();
+  const { id } = prefill;
   const isNew = id === 'new';
   const items = useScheduledItems();
   const existing = items.data?.find((i) => i.id === id);
@@ -58,13 +60,18 @@ export default function ScheduledItemScreen() {
   const [error, setError] = useState<string | null>(null);
 
   const k = kind ?? existing?.kind ?? 'bill';
-  const titleValue = title ?? existing?.title ?? '';
+  const titleValue = title ?? existing?.title ?? prefill.title ?? '';
   const amountValue =
-    amount ?? (existing?.amount_minor ? formatMoneyCompact(existing.amount_minor, currency, 'fr', { hideSymbol: true }).replace(/\s/g, '') : '');
+    amount ??
+    (existing?.amount_minor
+      ? formatMoneyCompact(existing.amount_minor, currency, 'fr', { hideSymbol: true }).replace(/\s/g, '')
+      : prefill.amount
+        ? formatMoneyCompact(Number(prefill.amount), currency, 'fr', { hideSymbol: true }).replace(/\s/g, '')
+        : '');
   const freq = frequency ?? existing?.frequency ?? 'monthly';
   const intervalValue = interval ?? existing?.interval_count ?? 1;
-  const startValue = start ?? existing?.start_date ?? today;
-  const category = categoryId === undefined ? (existing?.category_id ?? null) : categoryId;
+  const startValue = start ?? existing?.start_date ?? nextDay(today, prefill.day);
+  const category = categoryId === undefined ? (existing?.category_id ?? (prefill.categoryId || null)) : categoryId;
   const account = accountId === undefined ? (existing?.account_id ?? null) : accountId;
   const remindValue = remind === undefined ? (existing ? existing.remind_days_before : 1) : remind;
   const hasAmount = k !== 'reminder';
@@ -235,4 +242,17 @@ function Group({ title, children }: { title: string; children: React.ReactNode }
       </View>
     </View>
   );
+}
+
+/** Prochaine date (aujourd'hui compris) tombant le jour du mois demandé. */
+function nextDay(today: string, day?: string): string {
+  const d = Number(day);
+  if (!d) return today;
+  const [y, m] = today.split('-').map(Number) as [number, number];
+  const clamp = (yy: number, mm: number) => Math.min(d, new Date(yy, mm, 0).getDate());
+  const thisMonth = `${y}-${String(m).padStart(2, '0')}-${String(clamp(y, m)).padStart(2, '0')}`;
+  if (thisMonth >= today) return thisMonth;
+  const ny = m === 12 ? y + 1 : y;
+  const nm = m === 12 ? 1 : m + 1;
+  return `${ny}-${String(nm).padStart(2, '0')}-${String(clamp(ny, nm)).padStart(2, '0')}`;
 }
