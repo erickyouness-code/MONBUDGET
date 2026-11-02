@@ -46,7 +46,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 | 6 | Calendrier financier + récurrences + rappels | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 7 | Analyse intelligente (règles) | ✅ Terminé (aucune modification de la base) |
 | 8 | Abonnement (RevenueCat, essai, page Premium, webhook) | ✅ Code terminé — mise en service : `docs/ABONNEMENT.md` |
-| 9 | Assistant conversationnel | À faire |
+| 9 | Assistant conversationnel | ✅ Code terminé — mise en service : `docs/ASSISTANT.md` |
 | 10 | Finitions : export, suppression, biométrie, hors-ligne, publication | À faire |
 
 ## Étape 1 — détails
@@ -152,6 +152,23 @@ des transactions des 4 derniers mois, des budgets, des soldes et du calendrier :
   retour automatique à la page Premium à l'expiration.
 - Configuration EAS (`eas.json`), `expo-dev-client`, identifiant `com.monbudget.app`.
 
+## Étape 9 — détails
+
+- Fonction Edge `assistant` : vérifie la connexion, l'abonnement (`has_premium()`), l'accord de
+  l'utilisateur (`profiles.assistant_consent_at`) et le quota (`assistant_consume()`, exécutable
+  uniquement par le serveur), puis dialogue avec l'API Claude (`claude-opus-5-5` par défaut,
+  effort bas, relais automatique vers un modèle de secours en cas de refus).
+- 9 outils de calcul exacts, en lecture seule, exécutés avec le jeton de l'utilisateur (RLS) :
+  l'IA choisit l'outil et rédige ; elle ne calcule rien. Montants fournis déjà formatés, périodes
+  résolues par le serveur dans le fuseau du pays, estimations signalées comme telles.
+- Consignes fixes mises en cache (coût réduit) ; date du jour, devise et langue à part.
+- Aucune conversation stockée côté serveur ; historique limité aux 12 derniers messages.
+- Application : écran d'accord, exemples de questions (montant adapté à la devise), conversation,
+  erreurs claires (limite du jour, service saturé, refus), nouvelle tentative, retrait de l'accord
+  dans les Réglages, FR / AR / EN avec sens de lecture inversé en arabe.
+- La logique des échéances et des objectifs est partagée avec le serveur par copie vérifiée
+  (`npm run sync:functions`).
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
@@ -162,5 +179,11 @@ des transactions des 4 derniers mois, des budgets, des soldes et du calendrier :
 - Les alertes de budget s'affichent dans l'application (pas de notification du téléphone pour elles).
 - Les notifications n'ont pas encore été testées sur un vrai téléphone (impossible depuis cet environnement).
 - L'abonnement n'a pas pu être testé avec de vrais stores (comptes Apple / Google / RevenueCat requis).
+- L'assistant n'a pas pu être essayé avec la vraie API Claude (clé API requise) : la boucle et les
+  outils sont testés avec une fausse API. La qualité des réponses réelles reste à vérifier.
+- Le coût de l'assistant par utilisateur doit être mesuré (voir `docs/ASSISTANT.md`) et comparé au
+  prix de l'abonnement.
+- En mode démonstration, l'assistant répond avec les vraies données (un bandeau le signale).
+- Le clavier au-dessus de la zone de saisie n'a pas été vérifié sur un vrai téléphone.
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)
   sera nécessaire à partir de l'étape 8.

@@ -33,6 +33,7 @@ function createDb({ onboarded = false } = {}) {
       currency_code: onboarded ? 'MAD' : null,
       language: 'fr',
       onboarding_completed_at: onboarded ? '2026-01-01T00:00:00Z' : null,
+      assistant_consent_at: null,
     },
     accounts: [],
     transactions: [],
@@ -45,6 +46,9 @@ function createDb({ onboarded = false } = {}) {
     entitlement: { period_type: 'normal', expires_at: '2099-01-01T00:00:00Z', will_renew: true, billing_issue: false, store: 'app_store' },
     syncCalls: 0,
     onSync: null,
+    // Fonction « assistant » : requêtes reçues et réponses préparées par le test.
+    assistantCalls: [],
+    assistantReplies: [],
     categories: SYSTEM_CATEGORIES.map(([kind, key, sort_order, color]) => ({ id: uid(), user_id: null, kind, key, name: null, icon: key, color, sort_order, is_archived: false })),
   };
   db.category = (key) => db.categories.find((c) => c.key === key).id;
@@ -218,6 +222,12 @@ async function installMock(page, db) {
       db.syncCalls++;
       if (db.onSync) db.onSync();
       return json(200, { active: !!db.entitlement && Date.parse(db.entitlement.expires_at) > Date.now() });
+    }
+    if (p === '/functions/v1/assistant') {
+      db.assistantCalls.push({ body, authorization: req.headers()['authorization'] });
+      const next = db.assistantReplies.shift() ?? { status: 200, body: { reply: 'Réponse de test.' } };
+      if (next.delay) await new Promise((r) => setTimeout(r, next.delay));
+      return json(next.status, next.body);
     }
     if (p === '/rest/v1/rpc/complete_occurrence') { const r = db.complete(body); return json(r.status, r.body); }
     if (p === '/rest/v1/rpc/undo_occurrence') { db.undo(body.p_completion_id); return empty(204); }

@@ -14,14 +14,16 @@ export type Profile = {
   currency_code: CurrencyCode | null;
   language: Language;
   onboarding_completed_at: string | null;
+  /** Accord pour l'assistant (null = pas d'accord). */
+  assistant_consent_at: string | null;
 };
 
 /** Champs que l'utilisateur a le droit de modifier (identiques aux droits SQL). */
 export type ProfileUpdate = Partial<
-  Pick<Profile, 'display_name' | 'country_code' | 'currency_code' | 'language' | 'onboarding_completed_at'>
+  Pick<Profile, 'display_name' | 'country_code' | 'currency_code' | 'language' | 'onboarding_completed_at' | 'assistant_consent_at'>
 >;
 
-const COLUMNS = 'id, display_name, country_code, currency_code, language, onboarding_completed_at';
+const COLUMNS = 'id, display_name, country_code, currency_code, language, onboarding_completed_at, assistant_consent_at';
 
 export const profileKey = (userId: string | undefined) => ['profile', userId] as const;
 

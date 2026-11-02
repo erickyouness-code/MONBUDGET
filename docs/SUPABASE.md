@@ -25,6 +25,7 @@ Les fichiers du dossier `supabase/migrations/` s'exécutent **un par un, dans l'
 | 5 | `20261106000000_savings_goals.sql` | Objectifs d'épargne (étape 5) |
 | 6 | `20261107000000_schedule.sql` | Calendrier financier (étape 6) |
 | 7 | `20261108000000_subscriptions.sql` | Abonnement Premium (étape 8) — voir aussi `docs/ABONNEMENT.md` |
+| 8 | `20261109000000_assistant.sql` | Assistant : accord et quota (étape 9) — voir aussi `docs/ASSISTANT.md` |
 
 Pour chaque fichier :
 

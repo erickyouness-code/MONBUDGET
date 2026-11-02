@@ -6,6 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Linking, Switch, View } from 'react-native';
 
 import { useAccounts } from '@/features/accounts/api';
+import { useAssistantConsent } from '@/features/assistant/api';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useCurrency, useUpdateProfile } from '@/features/profile/api';
 import { useEntitlement, useSyncEntitlement } from '@/features/subscription/api';
@@ -51,6 +52,7 @@ export default function SettingsScreen() {
           : status.key === 'expired'
             ? t('settings.subExpired')
             : t('settings.subNone');
+  const assistantConsent = useAssistantConsent();
   const notificationsOn = usePreferences((s) => s.notifications);
   const setNotifications = usePreferences((s) => s.setNotifications);
   const [access, setAccess] = useState<NotificationAccess>('undetermined');
@@ -200,6 +202,22 @@ export default function SettingsScreen() {
               <Button label={t('settings.openPhoneSettings')} variant="secondary" onPress={() => void Linking.openSettings()} />
             </>
           ) : null}
+        </Card>
+      </Section>
+
+      <Section title={t('settings.assistantSection')} hint={t('settings.assistantHint')}>
+        <Card style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.md, paddingVertical: spacing.md }}>
+          <AppText variant="bodyStrong" style={{ flex: 1 }}>
+            {t('settings.assistantShare')}
+          </AppText>
+          <Switch
+            accessibilityLabel={t('settings.assistantShare')}
+            value={assistantConsent.granted}
+            disabled={assistantConsent.loading || assistantConsent.saving}
+            onValueChange={(v) => void assistantConsent.setGranted(v).catch(() => undefined)}
+            trackColor={{ true: colors.primary, false: colors.surfaceMuted }}
+            thumbColor={colors.surface}
+          />
         </Card>
       </Section>
 

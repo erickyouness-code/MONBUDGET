@@ -8,3 +8,7 @@ verify_jwt = false
 # L'application appelle cette fonction avec le jeton de l'utilisateur connecté.
 [functions.sync-entitlement]
 verify_jwt = true
+
+# Assistant : appelé avec le jeton de l'utilisateur connecté.
+[functions.assistant]
+verify_jwt = true
