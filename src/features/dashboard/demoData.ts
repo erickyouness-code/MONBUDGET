@@ -4,6 +4,7 @@ import { CURRENCIES, type CurrencyCode } from '@/shared/config/currencies';
 import { lastMonths, toYearMonth } from '@/shared/lib/dates';
 
 import { ICONS } from './icons';
+import type { ComparisonRanges } from './logic';
 import type { DashboardData } from './types';
 
 /**
@@ -25,16 +26,32 @@ function daysAgo(n: number, now: Date): string {
   return `${toYearMonth(d)}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-export function buildDemoDashboard(currency: CurrencyCode, t: TFunction, now = new Date()): DashboardData {
+export function buildDemoDashboard(
+  currency: CurrencyCode,
+  t: TFunction,
+  comparison: ComparisonRanges,
+  month: Date,
+  now = new Date(),
+): DashboardData {
   const a = (v: number) => amount(v, currency);
   const history = [4200, 3600, 6500, 5800, 8700, 10450];
+  const incomes = [11800, 11800, 12300, 11800, 12300, 12300];
+  const expenses = [10900, 12400, 9400, 12500, 9400, 9250];
+  const months = lastMonths(6, month);
 
   return {
     currency,
     isDemo: true,
+    isLoading: false,
+    comparison,
+    totalBalanceMinor: a(10450),
+    accountsCount: 3,
     incomeMinor: a(12300),
     expensesMinor: a(9250),
-    balanceHistory: lastMonths(6, now).map((month, i) => ({ month, balanceMinor: a(history[i] ?? 0) })),
+    previousIncomeMinor: a(11800),
+    previousExpensesMinor: a(10100),
+    balanceHistory: months.map((m, i) => ({ month: m, balanceMinor: a(history[i] ?? 0) })),
+    monthly: months.map((m, i) => ({ month: m, incomeMinor: a(incomes[i] ?? 0), expensesMinor: a(expenses[i] ?? 0) })),
     expensesByCategory: [
       { id: 'food', label: t('categories.food'), amountMinor: a(3400) },
       { id: 'housing', label: t('categories.housing'), amountMinor: a(2800) },
@@ -55,19 +72,5 @@ export function buildDemoDashboard(currency: CurrencyCode, t: TFunction, now = n
       { id: 't3', label: t('demo.cafe'), icon: ICONS.cafe, amountMinor: -a(25), date: daysAgo(1, now) },
       { id: 't4', label: t('demo.salary'), icon: ICONS.salary, amountMinor: a(12300), date: daysAgo(3, now) },
     ],
-  };
-}
-
-export function emptyDashboard(currency: CurrencyCode): DashboardData {
-  return {
-    currency,
-    isDemo: false,
-    incomeMinor: 0,
-    expensesMinor: 0,
-    balanceHistory: [],
-    expensesByCategory: [],
-    savingsGoal: null,
-    subscriptions: [],
-    recentTransactions: [],
   };
 }

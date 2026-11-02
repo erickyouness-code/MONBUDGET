@@ -4,7 +4,7 @@ import { accountsKey } from '@/features/accounts/api';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { supabase } from '@/shared/lib/supabase';
 
-import { monthRange, searchPattern } from './logic';
+import { searchPattern } from './logic';
 import type { Transaction, TransactionType, TransactionWrite } from './types';
 
 const COLUMNS =
@@ -75,26 +75,47 @@ export function useRecentTransactions(limit = 4) {
   });
 }
 
-/** Revenus et dépenses du mois en cours (les transferts sont exclus). */
-export function useMonthTransactions(date = new Date()) {
+/** Revenus et dépenses d'une période (les transferts sont exclus). */
+export function useTransactionsInRange(range: { from: string; to: string }) {
   const { session } = useAuth();
-  const { from, to } = monthRange(date);
   return useQuery({
-    queryKey: [...transactionsKey, 'month', from],
+    queryKey: [...transactionsKey, 'range', range.from, range.to],
     enabled: !!session,
     queryFn: async (): Promise<Pick<Transaction, 'type' | 'amount_minor' | 'category_id'>[]> => {
       const { data, error } = await supabase
         .from('transactions')
         .select('type, amount_minor, category_id')
         .in('type', ['expense', 'income'])
-        .gte('occurred_on', from)
-        .lte('occurred_on', to)
+        .gte('occurred_on', range.from)
+        .lte('occurred_on', range.to)
         .range(0, 9999);
       if (error) throw error;
       return (data ?? []).map((r) => ({ ...r, amount_minor: Number(r.amount_minor) })) as Pick<
         Transaction,
         'type' | 'amount_minor' | 'category_id'
       >[];
+    },
+  });
+}
+
+export type MonthOverview = { month: string; incomeMinor: number; expensesMinor: number; endBalanceMinor: number };
+
+/** Revenus, dépenses et solde de fin de mois des N derniers mois (calcul fait par la base). */
+export function useMonthlyOverview(until: string, months = 6) {
+  const { session } = useAuth();
+  return useQuery({
+    // Rangé sous « transactions » : rafraîchi automatiquement après chaque modification.
+    queryKey: [...transactionsKey, 'overview', until, months],
+    enabled: !!session,
+    queryFn: async (): Promise<MonthOverview[]> => {
+      const { data, error } = await supabase.rpc('monthly_overview', { p_until: until, p_months: months });
+      if (error) throw error;
+      return ((data ?? []) as { month: string; income_minor: number; expense_minor: number; end_balance_minor: number }[]).map((r) => ({
+        month: r.month.slice(0, 7),
+        incomeMinor: Number(r.income_minor),
+        expensesMinor: Number(r.expense_minor),
+        endBalanceMinor: Number(r.end_balance_minor),
+      }));
     },
   });
 }
@@ -112,14 +133,17 @@ export function useTransaction(id: string | undefined) {
   });
 }
 
-/** Après chaque modification : l'historique ET les soldes des comptes sont rafraîchis. */
+/**
+ * Après chaque modification : l'historique, les soldes et le tableau de bord
+ * sont rafraîchis EN ARRIÈRE-PLAN. On n'attend pas la fin du rafraîchissement
+ * pour fermer le formulaire (important sur une connexion lente).
+ */
 function useInvalidateMoney() {
   const client = useQueryClient();
-  return () =>
-    Promise.all([
-      client.invalidateQueries({ queryKey: transactionsKey }),
-      client.invalidateQueries({ queryKey: accountsKey }),
-    ]);
+  return () => {
+    void client.invalidateQueries({ queryKey: transactionsKey });
+    void client.invalidateQueries({ queryKey: accountsKey });
+  };
 }
 
 export function useSaveTransaction() {

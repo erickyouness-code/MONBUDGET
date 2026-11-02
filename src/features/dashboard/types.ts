@@ -3,7 +3,7 @@ import type { LucideIcon } from 'lucide-react-native';
 import type { CurrencyCode } from '@/shared/config/currencies';
 import type { YearMonth } from '@/shared/lib/dates';
 
-export type ExpenseCategoryKey = 'food' | 'housing' | 'transport' | 'bills' | 'leisure' | 'other';
+import type { ComparisonRanges } from './logic';
 
 export type IconKey =
   | 'food'
@@ -20,16 +20,28 @@ export type IconKey =
   | 'internet';
 
 /**
- * Tout ce qu'affiche le tableau de bord. À l'étape 3, ces données viendront
- * de calculs SQL sur vos transactions ; pour l'instant elles sont vides
- * (ou d'exemple si le mode démonstration est activé).
+ * Tout ce qu'affiche le tableau de bord pour un mois donné.
+ * Vient de vos transactions (calculs faits par la base), ou d'exemples
+ * clairement signalés en mode démonstration.
  */
 export type DashboardData = {
   currency: CurrencyCode;
   isDemo: boolean;
+  /** Première requête encore en cours (aucun chiffre à afficher). */
+  isLoading: boolean;
+  comparison: ComparisonRanges;
+  /** Somme des soldes des comptes actifs (null : aucun compte). */
+  totalBalanceMinor: number | null;
+  accountsCount: number;
   incomeMinor: number;
   expensesMinor: number;
+  /** Mêmes totaux sur la période de comparaison. */
+  previousIncomeMinor: number;
+  previousExpensesMinor: number;
+  /** Solde total en fin de mois, sur 6 mois. */
   balanceHistory: { month: YearMonth; balanceMinor: number }[];
+  /** Revenus et dépenses par mois, sur 6 mois. */
+  monthly: { month: YearMonth; incomeMinor: number; expensesMinor: number }[];
   expensesByCategory: { id: string; label: string; amountMinor: number }[];
   savingsGoal: { name: string; targetMinor: number; currentMinor: number } | null;
   subscriptions: { id: string; name: string; icon: LucideIcon; amountMinor: number; dayOfMonth: number }[];

@@ -364,7 +364,7 @@ export function TransactionForm({ initial }: Props) {
                 <View style={{ backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.md, marginTop: spacing.sm }}>
                   <DatePicker
                     value={field.value}
-                    max={addDays(today, 366)}
+                    max={today}
                     onChange={(d) => {
                       field.onChange(d);
                       setShowCalendar(false);

@@ -73,12 +73,15 @@ export function StatTile({
   currency,
   tone,
   icon: Icon,
+  footer,
 }: {
   label: string;
   amountMinor: number;
   currency: CurrencyCode;
   tone: Extract<CardTone, 'income' | 'expense' | 'violet'>;
   icon: LucideIcon;
+  /** Ligne sous le montant (variation, taux d'épargne…). */
+  footer?: ReactNode;
 }) {
   const { colors, spacing, radius } = useTheme();
   const accent = { income: colors.income, expense: colors.expense, violet: colors.primary }[tone];
@@ -113,6 +116,7 @@ export function StatTile({
         numberOfLines={1}
         adjustsFontSizeToFit
       />
+      {footer}
     </Card>
   );
 }

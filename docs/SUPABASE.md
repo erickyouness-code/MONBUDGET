@@ -20,6 +20,7 @@ Les fichiers du dossier `supabase/migrations/` s'exécutent **un par un, dans l'
 |---|---|---|
 | 1 | `20261102000000_profiles.sql` | Profils (étape 1) |
 | 2 | `20261103000000_accounts_transactions.sql` | Comptes, catégories, transactions (étape 2) |
+| 3 | `20261104000000_dashboard.sql` | Calculs du tableau de bord (étape 3) |
 
 Pour chaque fichier :
 

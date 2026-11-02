@@ -10,6 +10,7 @@ import { formatPlainNumber, toMajorRounded } from '@/shared/lib/money';
 import { useTheme } from '@/shared/theme/ThemeProvider';
 import { AmountText, AppText, Button } from '@/shared/ui';
 import { DonutChart } from '@/shared/ui/charts/DonutChart';
+import { BarChart } from '@/shared/ui/charts/BarChart';
 import { LineAreaChart } from '@/shared/ui/charts/LineAreaChart';
 import { ProgressRing } from '@/shared/ui/charts/ProgressRing';
 
@@ -39,6 +40,51 @@ export function BalanceTrendCard({ data }: Props) {
   );
 }
 
+export function MonthlyBarsCard({ data, highlightMonth }: Props & { highlightMonth: string }) {
+  const { t } = useTranslation();
+  const language = useLanguage();
+  const { colors, spacing } = useTheme();
+  const { currency, monthly } = data;
+  const hasData = monthly.some((m) => m.incomeMinor > 0 || m.expensesMinor > 0);
+  const highlight = monthly.findIndex((m) => m.month === highlightMonth);
+
+  return (
+    <SectionCard title={t('dashboard.incomeVsExpenses')}>
+      {hasData ? (
+        <View style={{ gap: spacing.md }}>
+          <BarChart
+            series={[
+              { values: monthly.map((m) => toMajorRounded(m.incomeMinor, currency)), color: colors.income },
+              { values: monthly.map((m) => toMajorRounded(m.expensesMinor, currency)), color: colors.expense },
+            ]}
+            labels={monthly.map((m) => formatMonthShort(m.month, language))}
+            formatTick={(v) => formatPlainNumber(v, language)}
+            highlight={highlight >= 0 ? highlight : undefined}
+          />
+          <View style={{ flexDirection: 'row', gap: spacing.lg, justifyContent: 'center' }}>
+            <Legend color={colors.income} label={t('dashboard.income')} />
+            <Legend color={colors.expense} label={t('dashboard.expenses')} />
+          </View>
+        </View>
+      ) : (
+        <EmptyHint text={t('dashboard.emptyChart')} />
+      )}
+    </SectionCard>
+  );
+}
+
+function Legend({ color, label }: { color: string; label: string }) {
+  const { spacing } = useTheme();
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xs }}>
+      <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: color }} />
+      <AppText variant="caption" color="textSecondary">
+        {label}
+      </AppText>
+    </View>
+  );
+}
+
 export function CategoryBreakdownCard({ data }: Props) {
   const { t } = useTranslation();
   const { chart, spacing } = useTheme();
@@ -54,10 +100,10 @@ export function CategoryBreakdownCard({ data }: Props) {
           <EmptyHint text={t('dashboard.emptyCategories')} />
         </View>
       ) : (
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.xl }}>
+        <View style={{ alignItems: 'center', gap: spacing.lg }}>
           <DonutChart segments={items.map((item, i) => ({ value: item.amountMinor, color: chart[i % chart.length]! }))}>
             {top ? (
-              <View style={{ alignItems: 'center' }}>
+              <View style={{ alignItems: 'center', maxWidth: 90 }}>
                 <AppText variant="headline">{shares[0]}%</AppText>
                 <AppText variant="small" color="textTertiary" numberOfLines={1}>
                   {top.label}
@@ -65,14 +111,15 @@ export function CategoryBreakdownCard({ data }: Props) {
               </View>
             ) : null}
           </DonutChart>
-          <View style={{ flex: 1, gap: spacing.sm }}>
+          <View style={{ alignSelf: 'stretch', gap: spacing.sm }}>
             {items.map((item, i) => (
               <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                 <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: chart[i % chart.length] }} />
                 <AppText variant="caption" color="textSecondary" numberOfLines={1} style={{ flex: 1 }}>
                   {item.label}
                 </AppText>
-                <AppText variant="caption" tabular>
+                <AmountText amountMinor={item.amountMinor} currency={data.currency} variant="caption" compact />
+                <AppText variant="caption" color="textTertiary" tabular style={{ minWidth: 36, textAlign: 'right' }}>
                   {shares[i]}%
                 </AppText>
               </View>

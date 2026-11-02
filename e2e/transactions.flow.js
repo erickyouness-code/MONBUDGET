@@ -1,64 +1,9 @@
 // Lancer avec : npm run test:e2e
 // Étape 2 : parcours complet avec un faux serveur Supabase (auth + base de données).
-const { Buffer } = require('node:buffer');
 const { chromium } = require('playwright');
 const out = process.argv[2];
-const API = 'https://test-project.supabase.co';
-const USER_ID = '11111111-2222-3333-4444-555555555555';
-const EMAIL = 'amina@example.com';
-
-const b64 = (o) => Buffer.from(JSON.stringify(o)).toString('base64url');
-const jwt = () => `${b64({ alg: 'HS256' })}.${b64({ sub: USER_ID, role: 'authenticated', aud: 'authenticated', exp: Math.floor(Date.now() / 1000) + 3600 })}.sig`;
-const user = { id: USER_ID, email: EMAIL, aud: 'authenticated', role: 'authenticated', app_metadata: {}, user_metadata: {}, identities: [{ id: '1' }], created_at: new Date().toISOString() };
-const session = () => ({ access_token: jwt(), token_type: 'bearer', expires_in: 3600, expires_at: Math.floor(Date.now() / 1000) + 3600, refresh_token: 'r', user });
-
-// ---------- Faux serveur ----------
-let seq = 0;
-const uid = () => `00000000-0000-4000-8000-${String(++seq).padStart(12, '0')}`;
-const db = {
-  profile: { id: USER_ID, display_name: null, country_code: null, currency_code: null, language: 'fr', onboarding_completed_at: null },
-  accounts: [],
-  transactions: [],
-  categories: [
-    ['expense', 'food', 10, '#5B4FE0'], ['expense', 'transport', 20, '#4C8DF6'], ['expense', 'housing', 30, '#B072E8'],
-    ['expense', 'bills', 40, '#F5A524'], ['expense', 'phone', 50, '#2BB3C0'], ['expense', 'mobile_money', 60, '#3CC386'],
-    ['expense', 'health', 80, '#E5566B'], ['expense', 'other', 990, '#A3A1B8'],
-    ['income', 'salary', 10, '#1E9E62'], ['income', 'freelance', 20, '#3CC386'], ['income', 'other_income', 990, '#A3A1B8'],
-  ].map(([kind, key, sort_order, color]) => ({ id: uid(), user_id: null, kind, key, name: null, icon: key, color, sort_order, is_archived: false })),
-};
-const balances = () =>
-  db.accounts.map((a) => ({
-    account_id: a.id,
-    balance_minor: db.transactions.reduce((sum, t) => {
-      if (t.type === 'income' && t.account_id === a.id) return sum + t.amount_minor;
-      if (t.type === 'expense' && t.account_id === a.id) return sum - t.amount_minor;
-      if (t.type === 'transfer' && t.account_id === a.id) return sum - t.amount_minor;
-      if (t.type === 'transfer' && t.to_account_id === a.id) return sum + t.amount_minor;
-      return sum;
-    }, a.initial_balance_minor),
-  }));
-
-function applyFilters(rows, params) {
-  let out = rows;
-  for (const [k, v] of params) {
-    if (['select', 'order', 'offset', 'limit', 'or'].includes(k)) continue;
-    const [op, ...rest] = v.split('.');
-    const val = rest.join('.');
-    if (op === 'eq') out = out.filter((r) => String(r[k]) === val);
-    if (op === 'gte') out = out.filter((r) => r[k] >= val);
-    if (op === 'lte') out = out.filter((r) => r[k] <= val);
-    if (op === 'in') { const set = val.replace(/[()]/g, '').split(','); out = out.filter((r) => set.includes(String(r[k]))); }
-  }
-  const or = params.get('or');
-  if (or) {
-    const text = (or.match(/description\.ilike\."%(.*?)%"/) || [])[1];
-    const ids = ((or.match(/category_id\.in\.\(([^)]*)\)/) || [])[1] || '').split(',').filter(Boolean);
-    out = out.filter((r) => (text && (r.description || '').toLowerCase().includes(text.toLowerCase())) || ids.includes(r.category_id));
-  }
-  const offset = Number(params.get('offset') || 0);
-  const limit = params.get('limit') ? Number(params.get('limit')) : undefined;
-  return limit ? out.slice(offset, offset + limit) : out.slice(offset);
-}
+const { EMAIL, createDb, installMock } = require('./mock-supabase');
+const db = createDb();
 
 const checks = [];
 const check = (name, ok, extra = '') => { checks.push(`${ok ? '✔' : '✘'} ${name}${ok ? '' : ' ' + extra}`); if (!ok) process.exitCode = 1; };
@@ -75,70 +20,13 @@ const check = (name, ok, extra = '') => { checks.push(`${ok ? '✔' : '✘'} ${n
   page.on('pageerror', (e) => errors.push(e.message));
   page.on('dialog', (d) => d.accept()); // confirmations de suppression
 
-  await page.route(`${API}/**`, async (route) => {
-    const req = route.request();
-    const url = new URL(req.url());
-    const method = req.method();
-    const body = req.postData() ? JSON.parse(req.postData()) : null;
-    const single = (req.headers()['accept'] || '').includes('vnd.pgrst.object');
-    const cors = { 'access-control-allow-origin': '*', 'access-control-allow-headers': '*', 'access-control-allow-methods': '*', 'access-control-expose-headers': '*' };
-    const json = (status, data) => route.fulfill({ status, contentType: 'application/json', body: JSON.stringify(data), headers: cors });
-    const empty = (status) => route.fulfill({ status, headers: cors, body: '' });
-    if (method === 'OPTIONS') return json(200, {});
-    const p = url.pathname;
-    const params = url.searchParams;
-
-    if (p === '/auth/v1/token') return json(200, session());
-    if (p === '/auth/v1/logout') return empty(204);
-    if (p === '/auth/v1/user') return json(200, user);
-
-    if (p === '/rest/v1/profiles') {
-      if (method === 'PATCH') Object.assign(db.profile, body);
-      return json(200, db.profile);
-    }
-    if (p === '/rest/v1/account_balances') return json(200, balances());
-    if (p === '/rest/v1/categories') {
-      if (method === 'POST') {
-        const row = { id: uid(), user_id: USER_ID, key: null, color: null, is_archived: false, ...body };
-        db.categories.push(row);
-        return single ? json(201, row) : empty(201);
-      }
-      return json(200, [...db.categories].sort((a, b) => a.sort_order - b.sort_order));
-    }
-    if (p === '/rest/v1/accounts') {
-      if (method === 'POST') {
-        for (const r of [].concat(body)) db.accounts.push({ id: uid(), is_archived: false, created_at: new Date(Date.now() + seq).toISOString(), ...r });
-        return empty(201);
-      }
-      const target = applyFilters(db.accounts, params);
-      if (method === 'PATCH') { target.forEach((a) => Object.assign(a, body)); return empty(204); }
-      if (method === 'DELETE') {
-        if (target.some((a) => db.transactions.some((t) => t.account_id === a.id || t.to_account_id === a.id)))
-          return json(409, { code: '23503', message: 'violates foreign key constraint' });
-        db.accounts = db.accounts.filter((a) => !target.includes(a));
-        return empty(204);
-      }
-      return json(200, target);
-    }
-    if (p === '/rest/v1/transactions') {
-      if (method === 'POST') {
-        for (const r of [].concat(body)) db.transactions.push({ id: uid(), created_at: new Date(Date.now() + seq).toISOString(), ...r });
-        return empty(201);
-      }
-      const sorted = [...db.transactions].sort((a, b) => (b.occurred_on + b.created_at).localeCompare(a.occurred_on + a.created_at));
-      const target = applyFilters(sorted, params);
-      if (method === 'PATCH') { target.forEach((t) => Object.assign(t, body)); return empty(204); }
-      if (method === 'DELETE') { db.transactions = db.transactions.filter((t) => !target.includes(t)); return empty(204); }
-      return single ? json(200, target[0]) : json(200, target);
-    }
-    return json(404, { message: 'non simulé' });
-  });
+  await installMock(page, db);
 
   const vt = (text) => page.getByText(text).locator('visible=true').first();
   const inHistory = (text) => page.getByTestId('history-list').getByText(text).first().isVisible();
   const shot = (n) => page.screenshot({ path: `${out}/${n}.png`, fullPage: false });
   const wait = (ms = 900) => page.waitForTimeout(ms);
-  const balance = (name) => { const a = db.accounts.find((x) => x.name === name); return balances().find((b) => b.account_id === a?.id)?.balance_minor; };
+  const balance = (name) => db.balance(name);
   const visible = (text) => vt(text).isVisible();
 
   // --- Connexion + paramétrage ---

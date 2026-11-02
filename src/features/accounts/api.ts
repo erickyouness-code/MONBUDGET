@@ -5,6 +5,13 @@ import type { Account, AccountType, AccountWithBalance } from '@/features/transa
 import type { CurrencyCode } from '@/shared/config/currencies';
 import { supabase } from '@/shared/lib/supabase';
 
+// Les soldes initiaux entrent dans l'historique du tableau de bord (rangé sous « transactions »).
+// Rafraîchissement en arrière-plan : l'écran se ferme sans attendre.
+const invalidateAll = (client: ReturnType<typeof useQueryClient>) => {
+  void client.invalidateQueries({ queryKey: accountsKey });
+  void client.invalidateQueries({ queryKey: ['transactions'] });
+};
+
 const COLUMNS = 'id, name, type, currency_code, initial_balance_minor, is_archived, created_at';
 
 export const accountsKey = ['accounts'] as const;
@@ -49,7 +56,7 @@ export function useSaveAccount() {
       const { error } = await query;
       if (error) throw error;
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: accountsKey }),
+    onSuccess: () => invalidateAll(client),
   });
 }
 
@@ -60,7 +67,7 @@ export function useArchiveAccount() {
       const { error } = await supabase.from('accounts').update({ is_archived: archived }).eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: accountsKey }),
+    onSuccess: () => invalidateAll(client),
   });
 }
 
@@ -72,7 +79,7 @@ export function useDeleteAccount() {
       const { error } = await supabase.from('accounts').delete().eq('id', id);
       if (error) throw error;
     },
-    onSuccess: () => client.invalidateQueries({ queryKey: accountsKey }),
+    onSuccess: () => invalidateAll(client),
   });
 }
 
