@@ -20,7 +20,7 @@ export function ChoiceChip({ label, selected, onPress, icon: Icon, detail }: Pro
   return (
     <Pressable
       accessibilityRole="radio"
-      accessibilityState={{ selected }}
+      aria-checked={selected}
       accessibilityLabel={detail ? `${label}, ${detail}` : label}
       onPress={onPress}
       style={({ pressed }) => ({

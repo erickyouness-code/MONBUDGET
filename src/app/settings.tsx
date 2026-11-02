@@ -1,9 +1,9 @@
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
 import { LogOut, Wallet } from 'lucide-react-native';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Switch, View } from 'react-native';
+import { Linking, Switch, View } from 'react-native';
 
 import { useAccounts } from '@/features/accounts/api';
 import { useAuth } from '@/features/auth/AuthProvider';
@@ -12,6 +12,7 @@ import { CURRENCY_CODES, type CurrencyCode } from '@/shared/config/currencies';
 import { deviceLanguageCode } from '@/shared/i18n';
 import { LANGUAGES, LANGUAGE_NATIVE_NAMES, resolveLanguage, type Language } from '@/shared/i18n/languages';
 import { useChangeLanguage } from '@/shared/i18n/useChangeLanguage';
+import { getNotificationAccess, requestNotificationAccess, type NotificationAccess } from '@/shared/lib/notifications';
 import { supabase } from '@/shared/lib/supabase';
 import { usePreferences, type ThemePreference } from '@/shared/store/preferences';
 import { useTheme } from '@/shared/theme/ThemeProvider';
@@ -30,6 +31,18 @@ export default function SettingsScreen() {
   const updateProfile = useUpdateProfile();
   const changeLanguage = useChangeLanguage();
   const [signingOut, setSigningOut] = useState(false);
+  const notificationsOn = usePreferences((s) => s.notifications);
+  const setNotifications = usePreferences((s) => s.setNotifications);
+  const [access, setAccess] = useState<NotificationAccess>('undetermined');
+
+  useEffect(() => {
+    void getNotificationAccess().then(setAccess);
+  }, []);
+
+  const toggleNotifications = async (value: boolean) => {
+    setNotifications(value);
+    if (value) setAccess(await requestNotificationAccess());
+  };
 
   const onLanguage = (value: Language | 'auto') => {
     const choice = value === 'auto' ? null : value;
@@ -113,6 +126,34 @@ export default function SettingsScreen() {
             <AmountText amountMinor={currency === 'MAD' ? 1250050 : 1250000} currency={currency} signDisplay="always" color="income" />
             <AmountText amountMinor={currency === 'MAD' ? -34575 : -34500} currency={currency} color="expense" />
           </View>
+        </Card>
+      </Section>
+
+      <Section title={t('settings.notifications')} hint={t('settings.notificationsHint')}>
+        <Card style={{ gap: spacing.sm, paddingVertical: spacing.md }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <AppText variant="bodyStrong">{t('settings.reminders')}</AppText>
+            <Switch
+              accessibilityLabel={t('settings.reminders')}
+              value={notificationsOn && access !== 'unsupported'}
+              disabled={access === 'unsupported'}
+              onValueChange={(v) => void toggleNotifications(v)}
+              trackColor={{ true: colors.primary, false: colors.surfaceMuted }}
+              thumbColor={colors.surface}
+            />
+          </View>
+          {access === 'unsupported' ? (
+            <AppText variant="small" color="textTertiary">
+              {t('settings.notificationsWeb')}
+            </AppText>
+          ) : access === 'denied' && notificationsOn ? (
+            <>
+              <AppText variant="small" color="warning">
+                {t('settings.notificationsDenied')}
+              </AppText>
+              <Button label={t('settings.openPhoneSettings')} variant="secondary" onPress={() => void Linking.openSettings()} />
+            </>
+          ) : null}
         </Card>
       </Section>
 

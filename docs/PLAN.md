@@ -43,7 +43,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 | 3 | Tableau de bord + graphiques | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 4 | Budgets + alertes | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 5 | Objectifs d'épargne | ✅ Code terminé — à brancher sur votre projet Supabase |
-| 6 | Calendrier financier + récurrences + rappels | À faire |
+| 6 | Calendrier financier + récurrences + rappels | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 7 | Analyse intelligente (règles) | À faire |
 | 8 | Abonnement (RevenueCat, essai, page Premium, webhook) | À faire |
 | 9 | Assistant conversationnel | À faire |
@@ -106,13 +106,28 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 - Les versements suivent l'épargne sans modifier le solde des comptes (choix à confirmer).
 - Les dates hors de l'année en cours affichent l'année.
 
+## Étape 6 — détails
+
+- Échéances : factures, abonnements, paiements prévus, revenus attendus, rappels ; une fois,
+  chaque semaine, chaque mois (ou tous les 2/3/6 mois), chaque année. Le 31 devient le 30 ou
+  le 28 selon le mois ; le 29 février devient le 28 hors années bissextiles.
+- Calendrier du mois (points de couleur, retards entourés), reste à payer / à recevoir,
+  sections « En retard / Aujourd'hui / 7 jours / Plus tard ».
+- « Marquer comme payé / reçu » crée la transaction dans la même opération (fonction
+  `complete_occurrence`) ; « Ignorer cette fois » ; « Annuler » supprime aussi la transaction créée.
+- Notifications locales (fonctionnent dans Expo Go) : rappel à 9 h, X jours avant ; autorisation
+  demandée seulement lors du premier rappel ; réglage pour les désactiver ; rappels effacés à la
+  déconnexion.
+- Accueil : carte « Prochaines échéances » ; un revenu en retard s'affiche « Pas encore reçu ».
+- Accessibilité : les choix (pastilles, sélecteurs) sont annoncés « coché » aux lecteurs d'écran.
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
   l'application sur iOS et Android. L'application prévient l'utilisateur et redémarre seule.
 - Le solde initial d'un compte ne peut pas encore être négatif depuis l'écran (la base l'accepte).
-- Les abonnements du tableau de bord arrivent à l'étape 6.
 - Les versements d'épargne ne sont pas liés automatiquement à un transfert entre comptes.
-- Les alertes de budget s'affichent dans l'application ; les notifications du téléphone arriveront à l'étape 6.
+- Les alertes de budget s'affichent dans l'application (pas de notification du téléphone pour elles).
+- Les notifications n'ont pas encore été testées sur un vrai téléphone (impossible depuis cet environnement).
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)
   sera nécessaire à partir de l'étape 8.

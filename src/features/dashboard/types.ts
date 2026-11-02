@@ -45,7 +45,19 @@ export type DashboardData = {
   expensesByCategory: { id: string; label: string; amountMinor: number }[];
   /** Objectif mis en avant : le plus proche de son échéance parmi ceux non atteints. */
   savingsGoal: { name: string; targetMinor: number; currentMinor: number } | null;
-  subscriptions: { id: string; name: string; icon: LucideIcon; amountMinor: number; dayOfMonth: number }[];
+  /** Prochaines échéances du calendrier (retards en premier). */
+  upcoming: {
+    id: string;
+    title: string;
+    icon: LucideIcon;
+    /** null pour un simple rappel. */
+    amountMinor: number | null;
+    dueOn: string;
+    income: boolean;
+    overdue: boolean;
+    /** Présent pour une vraie échéance (ouvre sa fiche). */
+    itemId?: string;
+  }[];
   recentTransactions: {
     id: string;
     label: string;

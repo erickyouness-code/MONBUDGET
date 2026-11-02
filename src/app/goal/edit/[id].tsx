@@ -95,7 +95,7 @@ export default function GoalEditScreen() {
               <Pressable
                 key={key}
                 accessibilityRole="radio"
-                accessibilityState={{ selected }}
+                aria-checked={selected}
                 accessibilityLabel={t(`goals.icons.${key}` as never)}
                 onPress={() => setIcon(key)}
                 style={{

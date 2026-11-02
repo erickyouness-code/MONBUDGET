@@ -84,7 +84,7 @@ export default function OnboardingSetupScreen() {
                     <Pressable
                       key={code}
                       accessibilityRole="radio"
-                      accessibilityState={{ selected }}
+                      aria-checked={selected}
                       onPress={() => selectCountry(code)}
                       style={{
                         flexDirection: 'row',

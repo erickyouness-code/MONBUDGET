@@ -39,6 +39,8 @@ function createDb({ onboarded = false } = {}) {
     budgets: [],
     goals: [],
     contributions: [],
+    scheduled: [],
+    completions: [],
     categories: SYSTEM_CATEGORIES.map(([kind, key, sort_order, color]) => ({ id: uid(), user_id: null, kind, key, name: null, icon: key, color, sort_order, is_archived: false })),
   };
   db.category = (key) => db.categories.find((c) => c.key === key).id;
@@ -116,6 +118,37 @@ function createDb({ onboarded = false } = {}) {
       };
     });
   };
+  // Calendrier : même logique que complete_occurrence / undo_occurrence.
+  db.addScheduled = (i) => { const row = { id: uid(), category_id: null, account_id: null, frequency: 'monthly', interval_count: 1, end_date: null, remind_days_before: 1, is_active: true, note: null, ...i }; db.scheduled.push(row); return row; };
+  db.complete = ({ p_item_id, p_due_on, p_status, p_account_id }) => {
+    const item = db.scheduled.find((i) => i.id === p_item_id);
+    if (!item) return { status: 404, body: { code: 'P0002', message: 'Échéance introuvable' } };
+    if (db.completions.some((c) => c.item_id === p_item_id && c.due_on === p_due_on)) return { status: 409, body: { code: '23505', message: 'duplicate' } };
+    let txId = null;
+    if (p_status === 'paid' && item.amount_minor !== null) {
+      const account = p_account_id ?? item.account_id;
+      if (!account) return { status: 400, body: { code: '23502', message: 'Choisissez un compte' } };
+      const income = item.kind === 'income';
+      const tx = db.addTx({
+        type: income ? 'income' : 'expense',
+        amount_minor: item.amount_minor,
+        occurred_on: db.today || new Date().toISOString().slice(0, 10),
+        account_id: account,
+        category_id: item.category_id ?? db.category(income ? 'other_income' : 'other'),
+        description: item.title,
+      });
+      txId = tx.id;
+    }
+    const row = { id: uid(), item_id: p_item_id, due_on: p_due_on, status: p_status, transaction_id: txId };
+    db.completions.push(row);
+    return { status: 200, body: row.id };
+  };
+  db.undo = (completionId) => {
+    const c = db.completions.find((x) => x.id === completionId);
+    if (!c) return;
+    db.completions = db.completions.filter((x) => x !== c);
+    if (c.transaction_id) db.transactions = db.transactions.filter((t) => t.id !== c.transaction_id);
+  };
   return db;
 }
 
@@ -172,6 +205,20 @@ async function installMock(page, db) {
     }
     if (p === '/rest/v1/account_balances') return json(200, db.balances());
     if (p === '/rest/v1/goal_progress') return json(200, db.goalProgress());
+    if (p === '/rest/v1/rpc/complete_occurrence') { const r = db.complete(body); return json(r.status, r.body); }
+    if (p === '/rest/v1/rpc/undo_occurrence') { db.undo(body.p_completion_id); return empty(204); }
+    if (p === '/rest/v1/scheduled_completions') return json(200, db.completions);
+    if (p === '/rest/v1/scheduled_items') {
+      if (method === 'POST') { for (const r of [].concat(body)) db.addScheduled(r); return empty(201); }
+      const target = applyFilters(db.scheduled, params);
+      if (method === 'PATCH') { target.forEach((i) => Object.assign(i, body)); return empty(204); }
+      if (method === 'DELETE') {
+        db.completions = db.completions.filter((c) => !target.some((i) => i.id === c.item_id));
+        db.scheduled = db.scheduled.filter((i) => !target.includes(i));
+        return empty(204);
+      }
+      return json(200, target);
+    }
     if (p === '/rest/v1/savings_goals') {
       if (method === 'POST') {
         const row = db.addGoal({ ...body, created_at: `${db.today || new Date().toISOString().slice(0, 10)}T10:00:00Z` });

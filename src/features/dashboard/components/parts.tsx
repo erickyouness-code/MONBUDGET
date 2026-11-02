@@ -129,6 +129,7 @@ export function MoneyRow({
   amountMinor,
   currency,
   showSign = false,
+  hideAmount = false,
   onPress,
 }: {
   icon: LucideIcon;
@@ -137,6 +138,7 @@ export function MoneyRow({
   amountMinor: number;
   currency: CurrencyCode;
   showSign?: boolean;
+  hideAmount?: boolean;
   onPress?: () => void;
 }) {
   const { colors, spacing, radius } = useTheme();
@@ -171,6 +173,7 @@ export function MoneyRow({
           </AppText>
         ) : null}
       </View>
+      {hideAmount ? null : (
       <AmountText
         amountMinor={amountMinor}
         currency={currency}
@@ -178,6 +181,7 @@ export function MoneyRow({
         signDisplay={showSign ? 'always' : 'never'}
         color={isIncome ? 'income' : 'text'}
       />
+      )}
     </Pressable>
   );
 }

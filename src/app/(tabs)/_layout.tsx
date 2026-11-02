@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Pressable, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useReminderSync } from '@/features/schedule/useReminderSync';
 import { useIsRTL } from '@/shared/i18n';
 import { useTheme } from '@/shared/theme/ThemeProvider';
 
@@ -45,6 +46,8 @@ export default function TabsLayout() {
   const { colors } = useTheme();
   const insets = useSafeAreaInsets();
   const isArabic = useIsRTL();
+  // Garde les rappels du téléphone à jour tant que l'utilisateur est connecté.
+  useReminderSync();
 
   return (
     <Tabs

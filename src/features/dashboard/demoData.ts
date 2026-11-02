@@ -62,10 +62,10 @@ export function buildDemoDashboard(
       { id: 'other', label: t('categories.other'), amountMinor: a(300) },
     ],
     savingsGoal: { name: t('demo.goalName'), targetMinor: a(50000), currentMinor: a(30000) },
-    subscriptions: [
-      { id: 's1', name: t('demo.video'), icon: ICONS.video, amountMinor: a(120), dayOfMonth: 5 },
-      { id: 's2', name: t('demo.music'), icon: ICONS.music, amountMinor: a(60), dayOfMonth: 12 },
-      { id: 's3', name: t('demo.internet'), icon: ICONS.internet, amountMinor: a(349), dayOfMonth: 20 },
+    upcoming: [
+      { id: 's1', title: t('demo.internet'), icon: ICONS.internet, amountMinor: a(349), dueOn: daysAgo(-3, now), income: false, overdue: false },
+      { id: 's2', title: t('demo.video'), icon: ICONS.video, amountMinor: a(120), dueOn: daysAgo(-5, now), income: false, overdue: false },
+      { id: 's3', title: t('demo.salary'), icon: ICONS.salary, amountMinor: a(12300), dueOn: daysAgo(-12, now), income: true, overdue: false },
     ],
     recentTransactions: [
       { id: 't1', label: t('demo.supermarket'), icon: ICONS.food, amountMinor: -a(350), date: daysAgo(0, now) },

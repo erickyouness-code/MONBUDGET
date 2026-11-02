@@ -1,6 +1,7 @@
 import type { Session } from '@supabase/supabase-js';
 import { createContext, useContext, useEffect, useMemo, useState, type PropsWithChildren } from 'react';
 
+import { cancelAllReminders } from '@/shared/lib/notifications';
 import { queryClient } from '@/shared/lib/queryClient';
 import { isSupabaseConfigured, supabase } from '@/shared/lib/supabase';
 
@@ -35,7 +36,11 @@ export function AuthProvider({ children }: PropsWithChildren) {
     const { data } = supabase.auth.onAuthStateChange((event, next) => {
       setSession(next);
       // Déconnexion : on vide le cache pour ne rien laisser de l'ancien compte.
-      if (event === 'SIGNED_OUT') queryClient.clear();
+      if (event === 'SIGNED_OUT') {
+        queryClient.clear();
+        // Plus aucun rappel du compte précédent sur ce téléphone.
+        void cancelAllReminders();
+      }
     });
     return () => data.subscription.unsubscribe();
   }, []);

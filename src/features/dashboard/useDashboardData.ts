@@ -6,9 +6,12 @@ import { useAccounts } from '@/features/accounts/api';
 import { useCategories } from '@/features/categories/api';
 import { categoryIcon, categoryLabel } from '@/features/categories/meta';
 import { useGoals } from '@/features/goals/api';
+import { useCompletions, useScheduledItems } from '@/features/schedule/api';
+import { upcoming } from '@/features/schedule/logic';
+import { KIND_ICONS } from '@/features/schedule/meta';
+import { toISODate , summarize } from '@/features/transactions/logic';
 import { useCurrency } from '@/features/profile/api';
 import { useMonthlyOverview, useRecentTransactions, useTransactionsInRange } from '@/features/transactions/api';
-import { summarize } from '@/features/transactions/logic';
 import { usePreferences } from '@/shared/store/preferences';
 
 import { buildDemoDashboard } from './demoData';
@@ -36,6 +39,8 @@ export function useDashboardData(month: Date): DashboardData {
   const recent = useRecentTransactions(4);
   const categories = useCategories();
   const goals = useGoals();
+  const scheduled = useScheduledItems();
+  const completions = useCompletions();
 
   return useMemo((): DashboardData => {
     if (demoMode) return buildDemoDashboard(currency, t, comparison, month);
@@ -96,7 +101,7 @@ export function useDashboardData(month: Date): DashboardData {
       monthly: usefulMonths.map((m) => ({ month: m.month, incomeMinor: m.incomeMinor, expensesMinor: m.expensesMinor })),
       expensesByCategory,
       savingsGoal: featuredGoal(goals.data),
-      subscriptions: [], // étape 6
+      upcoming: nextOccurrences(scheduled.data, completions.data),
       recentTransactions,
     };
     // i18n.language : recalcule les libellés quand la langue change.
@@ -117,7 +122,28 @@ export function useDashboardData(month: Date): DashboardData {
     recent.data,
     categories.data,
     goals.data,
+    scheduled.data,
+    completions.data,
   ]);
+}
+
+/** Les 4 prochaines échéances non réglées (retards d'abord). */
+function nextOccurrences(
+  items: ReturnType<typeof useScheduledItems>['data'],
+  completions: ReturnType<typeof useCompletions>['data'],
+): DashboardData['upcoming'] {
+  if (!items || !completions) return [];
+  const g = upcoming(items, completions, toISODate(new Date()));
+  return [...g.overdue, ...g.today, ...g.week, ...g.later].slice(0, 4).map((o) => ({
+    id: `${o.item.id}|${o.dueOn}`,
+    itemId: o.item.id,
+    title: o.item.title,
+    icon: KIND_ICONS[o.item.kind],
+    amountMinor: o.item.amount_minor,
+    dueOn: o.dueOn,
+    income: o.item.kind === 'income',
+    overdue: o.state === 'overdue',
+  }));
 }
 
 /** Objectif à mettre en avant : non atteint, échéance la plus proche (sinon le plus récent). */

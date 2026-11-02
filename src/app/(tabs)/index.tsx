@@ -18,7 +18,7 @@ import {
   MonthlyBarsCard,
   RecentTransactionsCard,
   SavingsCard,
-  SubscriptionsCard,
+  UpcomingCard,
 } from '@/features/dashboard/components/Cards';
 import { ChangeBadge } from '@/features/dashboard/components/ChangeBadge';
 import { DashboardHeader } from '@/features/dashboard/components/DashboardHeader';
@@ -208,7 +208,7 @@ export default function DashboardScreen() {
             <SavingsCard data={data} />
           </Animated.View>
           <Animated.View entering={enter(7)}>
-            <SubscriptionsCard data={data} />
+            <UpcomingCard data={data} />
           </Animated.View>
         </>
       ) : null}

@@ -185,24 +185,36 @@ export function SavingsCard({ data }: Props) {
   );
 }
 
-export function SubscriptionsCard({ data }: Props) {
+export function UpcomingCard({ data }: Props) {
   const { t } = useTranslation();
+  const language = useLanguage();
   const { spacing } = useTheme();
 
   return (
-    <SectionCard title={t('dashboard.subscriptions')}>
-      {data.subscriptions.length === 0 ? (
-        <EmptyHint text={t('dashboard.emptySubscriptions')} />
+    <SectionCard
+      title={t('dashboard.upcoming')}
+      accessory={!data.isDemo ? <TextLink label={t('common.seeAll')} onPress={() => router.push('/calendar')} /> : undefined}
+    >
+      {data.upcoming.length === 0 ? (
+        <EmptyHint
+          text={t('dashboard.emptyUpcoming')}
+          action={<Button label={t('schedule.add')} variant="secondary" icon={Plus} onPress={() => router.push('/scheduled/new')} />}
+        />
       ) : (
         <View style={{ gap: spacing.lg }}>
-          {data.subscriptions.map((s) => (
+          {data.upcoming.map((u) => (
             <MoneyRow
-              key={s.id}
-              icon={s.icon}
-              title={s.name}
-              subtitle={t('dashboard.everyMonthOn', { day: s.dayOfMonth })}
-              amountMinor={s.amountMinor}
+              key={u.id}
+              icon={u.icon}
+              title={u.title}
+              subtitle={`${formatDayShort(u.dueOn, language)}${u.overdue ? ` · ${t(u.income ? 'schedule.states.notReceived' : 'schedule.states.overdue')}` : ''}`}
+              amountMinor={u.amountMinor === null ? 0 : u.income ? u.amountMinor : -u.amountMinor}
+              hideAmount={u.amountMinor === null}
               currency={data.currency}
+              showSign
+              onPress={
+                u.itemId ? () => router.push({ pathname: '/occurrence', params: { itemId: u.itemId!, due: u.dueOn } }) : undefined
+              }
             />
           ))}
         </View>

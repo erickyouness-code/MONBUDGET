@@ -225,7 +225,7 @@ export function TransactionForm({ initial }: Props) {
                       <Pressable
                         key={c.id}
                         accessibilityRole="radio"
-                        accessibilityState={{ selected }}
+                        aria-checked={selected}
                         accessibilityLabel={categoryLabel(c, t)}
                         onPress={() => field.onChange(c.id)}
                         style={{ width: '25%', alignItems: 'center', gap: spacing.xs }}

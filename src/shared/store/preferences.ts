@@ -22,10 +22,13 @@ type PreferencesState = {
   currency: CurrencyCode;
   /** Affiche des données d'exemple clairement signalées (jamais enregistrées). */
   demoMode: boolean;
+  /** Rappels du calendrier sur le téléphone. */
+  notifications: boolean;
   setTheme: (theme: ThemePreference) => void;
   setLanguage: (language: Language | null) => void;
   setCurrency: (currency: CurrencyCode) => void;
   setDemoMode: (demoMode: boolean) => void;
+  setNotifications: (notifications: boolean) => void;
 };
 
 // On garde la dernière écriture pour pouvoir l'attendre avant un redémarrage.
@@ -56,12 +59,14 @@ export const usePreferences = create<PreferencesState>()(
       demoMode: false,
       setCurrency: (currency) => set({ currency }),
       setDemoMode: (demoMode) => set({ demoMode }),
+      notifications: true,
+      setNotifications: (notifications) => set({ notifications }),
     }),
     {
       name: 'monbudget.preferences',
       version: 1,
       storage: createJSONStorage(() => trackedStorage),
-      partialize: ({ theme, language, currency, demoMode }) => ({ theme, language, currency, demoMode }),
+      partialize: ({ theme, language, currency, demoMode, notifications }) => ({ theme, language, currency, demoMode, notifications }),
     },
   ),
 );

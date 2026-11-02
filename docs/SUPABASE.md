@@ -23,6 +23,7 @@ Les fichiers du dossier `supabase/migrations/` s'exécutent **un par un, dans l'
 | 3 | `20261104000000_dashboard.sql` | Calculs du tableau de bord (étape 3) |
 | 4 | `20261105000000_budgets.sql` | Budgets et alertes (étape 4) |
 | 5 | `20261106000000_savings_goals.sql` | Objectifs d'épargne (étape 5) |
+| 6 | `20261107000000_schedule.sql` | Calendrier financier (étape 6) |
 
 Pour chaque fichier :
 

@@ -47,7 +47,7 @@ export default function WelcomeScreen() {
             <Pressable
               key={code}
               accessibilityRole="radio"
-              accessibilityState={{ selected }}
+              aria-checked={selected}
               onPress={() => void changeLanguage(code)}
               style={{
                 paddingHorizontal: spacing.md,
