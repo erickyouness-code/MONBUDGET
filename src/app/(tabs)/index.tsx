@@ -1,11 +1,17 @@
 import { useQueryClient } from '@tanstack/react-query';
-import { ArrowDownLeft, ArrowUpRight, FlaskConical, Scale } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { ArrowDownLeft, ArrowUpRight, ChevronRight, FlaskConical, Scale, TriangleAlert } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, View } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { useBudgetStatus } from '@/features/budgets/api';
+import { GlobalBudgetCard } from '@/features/budgets/components';
+import { budgetLevel } from '@/features/budgets/logic';
+import { useCategories } from '@/features/categories/api';
+import { categoryLabel } from '@/features/categories/meta';
 import {
   BalanceTrendCard,
   CategoryBreakdownCard,
@@ -18,9 +24,11 @@ import { ChangeBadge } from '@/features/dashboard/components/ChangeBadge';
 import { DashboardHeader } from '@/features/dashboard/components/DashboardHeader';
 import { BalanceHero, MonthSwitcher } from '@/features/dashboard/components/Overview';
 import { StatTile } from '@/features/dashboard/components/parts';
+import { demoBudgets } from '@/features/dashboard/demoData';
 import { canGoForward, computeChange, savingsRate, shiftMonth } from '@/features/dashboard/logic';
 import { useDashboardData } from '@/features/dashboard/useDashboardData';
 import { useProfile } from '@/features/profile/api';
+import { toISODate } from '@/features/transactions/logic';
 import { toYearMonth } from '@/shared/lib/dates';
 import { useTheme } from '@/shared/theme/ThemeProvider';
 import { AppText } from '@/shared/ui';
@@ -41,6 +49,14 @@ export default function DashboardScreen() {
   const data = useDashboardData(month);
 
   const isCurrentMonth = !canGoForward(month);
+  const budgetStatus = useBudgetStatus(toISODate(month));
+  const categories = useCategories();
+  const budgets = data.isDemo ? demoBudgets(data.currency) : (budgetStatus.data ?? []);
+  const globalBudget = budgets.find((b) => b.categoryId === null);
+  // Budgets par catégorie à surveiller (seuil atteint ou dépassé).
+  const toWatch = budgets
+    .filter((b) => b.categoryId !== null && budgetLevel(b) !== 'ok')
+    .map((b) => categoryLabel(categories.data?.find((c) => c.id === b.categoryId), t));
   const rate = savingsRate(data.incomeMinor, data.expensesMinor);
   const name = profile.data?.display_name;
 
@@ -140,6 +156,39 @@ export default function DashboardScreen() {
           }
         />
       </Animated.View>
+
+      {toWatch.length > 0 ? (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push('/budgets')}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: spacing.sm,
+            backgroundColor: colors.warningSoft,
+            borderRadius: radius.md,
+            padding: spacing.md,
+            opacity: pressed ? 0.8 : 1,
+          })}
+        >
+          <TriangleAlert size={18} color={colors.warning} />
+          <AppText variant="caption" style={{ color: colors.warning, flex: 1 }}>
+            {t('dashboard.budgetsToWatch', { count: toWatch.length, names: toWatch.slice(0, 3).join(', ') })}
+          </AppText>
+          <ChevronRight size={18} color={colors.warning} />
+        </Pressable>
+      ) : null}
+
+      {isCurrentMonth || globalBudget ? (
+        <Animated.View entering={enter(2)}>
+          <GlobalBudgetCard
+            budget={globalBudget}
+            currency={data.currency}
+            today={isCurrentMonth ? new Date() : undefined}
+            onEdit={() => router.push('/budgets')}
+          />
+        </Animated.View>
+      ) : null}
 
       <Animated.View entering={enter(2)}>
         <BalanceTrendCard data={data} />

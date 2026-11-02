@@ -36,6 +36,7 @@ function createDb({ onboarded = false } = {}) {
     },
     accounts: [],
     transactions: [],
+    budgets: [],
     categories: SYSTEM_CATEGORIES.map(([kind, key, sort_order, color]) => ({ id: uid(), user_id: null, kind, key, name: null, icon: key, color, sort_order, is_archived: false })),
   };
   db.category = (key) => db.categories.find((c) => c.key === key).id;
@@ -69,6 +70,32 @@ function createDb({ onboarded = false } = {}) {
       rows.push({ month: s, income_minor: sum('income'), expense_minor: sum('expense'), end_balance_minor: initial + net });
     }
     return rows;
+  };
+  // Même logique que les fonctions SQL set_budget et budget_status.
+  db.monthOf = (iso) => `${iso.slice(0, 7)}-01`;
+  db.setBudget = (categoryId, limit, threshold, month) => {
+    const existing = db.budgets.find((b) => b.category_id === categoryId && b.effective_month === month);
+    if (existing) Object.assign(existing, { limit_minor: limit, alert_threshold_pct: threshold });
+    else db.budgets.push({ category_id: categoryId, effective_month: month, limit_minor: limit, alert_threshold_pct: threshold });
+  };
+  db.budgetStatus = (monthIso) => {
+    const start = db.monthOf(monthIso);
+    const [y, m] = start.split('-').map(Number);
+    const end = new Date(Date.UTC(y, m, 1)).toISOString().slice(0, 10);
+    const latest = new Map();
+    for (const b of [...db.budgets].sort((a, c) => a.effective_month.localeCompare(c.effective_month))) {
+      if (b.effective_month <= start) latest.set(b.category_id, b);
+    }
+    return [...latest.values()]
+      .filter((b) => b.limit_minor !== null)
+      .map((b) => ({
+        category_id: b.category_id,
+        limit_minor: b.limit_minor,
+        alert_threshold_pct: b.alert_threshold_pct,
+        spent_minor: db.transactions
+          .filter((t) => t.type === 'expense' && t.occurred_on >= start && t.occurred_on < end && (b.category_id === null || t.category_id === b.category_id))
+          .reduce((a, t) => a + t.amount_minor, 0),
+      }));
   };
   return db;
 }
@@ -118,6 +145,12 @@ async function installMock(page, db) {
       return json(200, db.profile);
     }
     if (p === '/rest/v1/rpc/monthly_overview') return json(200, db.monthlyOverview(body.p_until, body.p_months));
+    if (p === '/rest/v1/rpc/budget_status') return json(200, db.budgetStatus(body.p_month));
+    if (p === '/rest/v1/rpc/set_budget') {
+      // « Mois en cours » = celui du navigateur (horloge éventuellement figée par le test).
+      db.setBudget(body.p_category_id, body.p_limit_minor, body.p_threshold_pct, db.monthOf(db.today || new Date().toISOString()));
+      return empty(204);
+    }
     if (p === '/rest/v1/account_balances') return json(200, db.balances());
     if (p === '/rest/v1/categories') {
       if (method === 'POST') {

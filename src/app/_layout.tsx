@@ -17,6 +17,7 @@ import { usePreferences } from '@/shared/store/preferences';
 import { useHydrated } from '@/shared/store/useHydrated';
 import { AppThemeProvider, useTheme } from '@/shared/theme/ThemeProvider';
 import { Button, EmptyState } from '@/shared/ui';
+import { ToastHost } from '@/shared/ui/ToastHost';
 
 void SplashScreen.preventAutoHideAsync();
 
@@ -43,6 +44,7 @@ export default function RootLayout() {
           <AuthProvider>
             <AppThemeProvider>
               <RootNavigator />
+              <ToastHost />
             </AppThemeProvider>
           </AuthProvider>
         </QueryClientProvider>
@@ -125,6 +127,14 @@ function RootNavigator() {
         <Stack.Screen name="settings" options={{ ...modalOptions, title: t('settings.title') }} />
         <Stack.Screen name="transaction/[id]" options={{ ...modalOptions, title: t('transactions.editTitle') }} />
         <Stack.Screen name="accounts" options={{ ...modalOptions, title: t('accounts.title') }} />
+        <Stack.Screen name="budgets" options={{ ...modalOptions, title: t('budgets.title') }} />
+        <Stack.Screen
+          name="budget/[key]"
+          options={({ route }) => ({
+            ...modalOptions,
+            title: (route.params as { key?: string } | undefined)?.key === 'global' ? t('budgets.monthlyBudget') : t('budgets.categoryBudget'),
+          })}
+        />
         <Stack.Screen
           name="account/[id]"
           options={({ route }) => ({

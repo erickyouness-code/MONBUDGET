@@ -8,6 +8,7 @@ import { KeyboardAvoidingView, Platform, Pressable, ScrollView, View } from 'rea
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useAccounts } from '@/features/accounts/api';
+import { useBudgetAlerts } from '@/features/budgets/api';
 import { useCategories, useCreateCategory } from '@/features/categories/api';
 import { ACCOUNT_ICONS, categoryIcon, categoryLabel } from '@/features/categories/meta';
 import { useCurrency } from '@/features/profile/api';
@@ -38,6 +39,7 @@ export function TransactionForm({ initial }: Props) {
   const save = useSaveTransaction();
   const remove = useDeleteTransaction();
   const createCategory = useCreateCategory();
+  const budgetAlerts = useBudgetAlerts();
   const [serverError, setServerError] = useState<string | null>(null);
   const [showCalendar, setShowCalendar] = useState(false);
   const [newCategory, setNewCategory] = useState<string | null>(null);
@@ -121,9 +123,14 @@ export function TransactionForm({ initial }: Props) {
 
   const submit = handleSubmit(async (values) => {
     setServerError(null);
+    // Une dépense du mois en cours peut faire franchir un seuil de budget.
+    const touchesBudget =
+      (values.type === 'expense' || initial?.type === 'expense') && values.occurredOn.slice(0, 7) === today.slice(0, 7);
+    const before = touchesBudget ? await budgetAlerts.snapshot() : null;
     try {
       await save.mutateAsync({ ...toTransactionWrite(values, currency), id: initial?.id });
       router.back();
+      if (touchesBudget) void budgetAlerts.check(before);
     } catch {
       setServerError(t('errors.saveFailed'));
     }

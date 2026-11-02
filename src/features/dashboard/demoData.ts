@@ -1,5 +1,6 @@
 import type { TFunction } from 'i18next';
 
+import type { BudgetStatus } from '@/features/budgets/logic';
 import { CURRENCIES, type CurrencyCode } from '@/shared/config/currencies';
 import { lastMonths, toYearMonth } from '@/shared/lib/dates';
 
@@ -73,4 +74,9 @@ export function buildDemoDashboard(
       { id: 't4', label: t('demo.salary'), icon: ICONS.salary, amountMinor: a(12300), date: daysAgo(3, now) },
     ],
   };
+}
+
+/** Budget global d'exemple (mode démonstration). */
+export function demoBudgets(currency: CurrencyCode): BudgetStatus[] {
+  return [{ categoryId: null, limitMinor: amount(11000, currency), thresholdPct: 80, spentMinor: amount(9250, currency) }];
 }

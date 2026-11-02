@@ -41,7 +41,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 | 1 | Supabase : authentification, onboarding, profils, RLS | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 2 | Comptes + transactions (CRUD, recherche, transferts, catégories) | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 3 | Tableau de bord + graphiques | ✅ Code terminé — à brancher sur votre projet Supabase |
-| 4 | Budgets + alertes | À faire |
+| 4 | Budgets + alertes | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 5 | Objectifs d'épargne | À faire |
 | 6 | Calendrier financier + récurrences + rappels | À faire |
 | 7 | Analyse intelligente (règles) | À faire |
@@ -85,11 +85,22 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
   espace à l'étape 6).
 - Enregistrement plus rapide : les chiffres se mettent à jour en arrière-plan.
 
+## Étape 4 — détails
+
+- Budget du mois (global) et plafonds par catégorie de dépense, avec seuil d'alerte réglable (70–100 %).
+- Un budget s'applique chaque mois jusqu'à modification ; changer un plafond ne réécrit pas les mois passés.
+- Aide à la fin de mois : reste à dépenser, montant possible **par jour**, et **estimation** (présentée
+  comme telle) des dépenses de fin de mois au rythme actuel.
+- Alertes dans l'application juste après une dépense qui franchit le seuil ou dépasse un plafond,
+  et bandeau « Budgets à surveiller » sur le tableau de bord.
+- Calculs faits par la base (`budget_status`, `set_budget`), protégés par RLS.
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
   l'application sur iOS et Android. L'application prévient l'utilisateur et redémarre seule.
 - Le solde initial d'un compte ne peut pas encore être négatif depuis l'écran (la base l'accepte).
-- L'épargne, le budget restant et les abonnements du tableau de bord arrivent aux étapes 4, 5 et 6.
+- L'épargne et les abonnements du tableau de bord arrivent aux étapes 5 et 6.
+- Les alertes de budget s'affichent dans l'application ; les notifications du téléphone arriveront à l'étape 6.
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)
   sera nécessaire à partir de l'étape 8.
