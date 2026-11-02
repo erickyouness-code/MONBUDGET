@@ -1,9 +1,11 @@
 import Constants from 'expo-constants';
-import { LogOut } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { LogOut, Wallet } from 'lucide-react-native';
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Switch, View } from 'react-native';
 
+import { useAccounts } from '@/features/accounts/api';
 import { useAuth } from '@/features/auth/AuthProvider';
 import { useCurrency, useUpdateProfile } from '@/features/profile/api';
 import { CURRENCY_CODES, type CurrencyCode } from '@/shared/config/currencies';
@@ -13,7 +15,7 @@ import { useChangeLanguage } from '@/shared/i18n/useChangeLanguage';
 import { supabase } from '@/shared/lib/supabase';
 import { usePreferences, type ThemePreference } from '@/shared/store/preferences';
 import { useTheme } from '@/shared/theme/ThemeProvider';
-import { AmountText, AppText, Banner, Button, Card, Screen, SegmentedControl } from '@/shared/ui';
+import { AmountText, AppText, Banner, Button, Card, ListRow, Screen, SegmentedControl } from '@/shared/ui';
 
 export default function SettingsScreen() {
   const { t } = useTranslation();
@@ -21,6 +23,10 @@ export default function SettingsScreen() {
   const { session } = useAuth();
   const { theme, language, demoMode, setTheme, setCurrency, setDemoMode } = usePreferences();
   const currency = useCurrency();
+  const accounts = useAccounts();
+  // Version 1 : une seule devise. Elle est figée dès qu'un compte existe,
+  // pour que tous les montants restent cohérents.
+  const currencyLocked = (accounts.data?.length ?? 0) > 0;
   const updateProfile = useUpdateProfile();
   const changeLanguage = useChangeLanguage();
   const [signingOut, setSigningOut] = useState(false);
@@ -61,6 +67,10 @@ export default function SettingsScreen() {
         </Card>
       </Section>
 
+      <Card style={{ paddingVertical: spacing.xs }}>
+        <ListRow icon={Wallet} title={t('accounts.title')} description={t('accounts.subtitle')} onPress={() => router.push('/accounts')} />
+      </Card>
+
       <Section title={t('settings.language')}>
         <SegmentedControl<Language | 'auto'>
           accessibilityLabel={t('settings.language')}
@@ -86,11 +96,13 @@ export default function SettingsScreen() {
         />
       </Section>
 
-      <Section title={t('settings.currency')} hint={t('settings.currencyHint')}>
+      <Section title={t('settings.currency')} hint={currencyLocked ? t('settings.currencyLocked') : t('settings.currencyHint')}>
         <SegmentedControl<CurrencyCode>
           accessibilityLabel={t('settings.currency')}
           value={currency}
-          onChange={onCurrency}
+          onChange={(value) => {
+            if (!currencyLocked) onCurrency(value);
+          }}
           options={CURRENCY_CODES.map((code) => ({ value: code, label: t(`currency.${code}`) }))}
         />
         <Card tone="muted" style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: spacing.sm }}>

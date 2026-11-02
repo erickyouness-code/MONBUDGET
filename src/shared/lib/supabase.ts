@@ -40,7 +40,7 @@ export const supabase: SupabaseClient = createClient(
   {
     auth: {
       storage: authStorage,
-      storageKey: 'mizane.auth',
+      storageKey: 'monbudget.auth',
       autoRefreshToken: true,
       persistSession: true,
       detectSessionInUrl: false,

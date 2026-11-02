@@ -124,3 +124,17 @@ export function formatMoneyCompact(
   if (decimals === 0 || amountMinor % 10 ** decimals !== 0) return full;
   return full.replace(`${SEPARATORS[language].decimal}${'0'.repeat(decimals)}`, '');
 }
+
+/**
+ * Nettoie la saisie : chiffres et un seul séparateur décimal, pas plus de
+ * décimales que la devise n'en autorise (aucune pour le FCFA).
+ */
+export function sanitizeAmountInput(raw: string, currency: CurrencyCode): string {
+  const { decimals } = CURRENCIES[currency];
+  let cleaned = raw.replace(/[^\d.,]/g, '').replace('.', ',');
+  if (decimals === 0) return cleaned.replace(/,/g, '').replace(/^0+(?=\d)/, '').slice(0, 13);
+  const [int = '', ...rest] = cleaned.split(',');
+  const frac = rest.join('').slice(0, decimals);
+  cleaned = int.replace(/^0+(?=\d)/, '').slice(0, 12) + (rest.length ? `,${frac}` : '');
+  return cleaned;
+}

@@ -123,6 +123,15 @@ function RootNavigator() {
         <Stack.Screen name="(tabs)" />
         <Stack.Screen name="add" options={{ ...modalOptions, title: t('add.title') }} />
         <Stack.Screen name="settings" options={{ ...modalOptions, title: t('settings.title') }} />
+        <Stack.Screen name="transaction/[id]" options={{ ...modalOptions, title: t('transactions.editTitle') }} />
+        <Stack.Screen name="accounts" options={{ ...modalOptions, title: t('accounts.title') }} />
+        <Stack.Screen
+          name="account/[id]"
+          options={({ route }) => ({
+            ...modalOptions,
+            title: (route.params as { id?: string } | undefined)?.id === 'new' ? t('accounts.newTitle') : t('accounts.editTitle'),
+          })}
+        />
       </Stack.Protected>
     </Stack>
   );

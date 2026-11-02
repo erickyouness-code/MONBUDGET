@@ -58,7 +58,7 @@ export const usePreferences = create<PreferencesState>()(
       setDemoMode: (demoMode) => set({ demoMode }),
     }),
     {
-      name: 'mizane.preferences',
+      name: 'monbudget.preferences',
       version: 1,
       storage: createJSONStorage(() => trackedStorage),
       partialize: ({ theme, language, currency, demoMode }) => ({ theme, language, currency, demoMode }),

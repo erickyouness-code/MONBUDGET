@@ -43,3 +43,6 @@ yarn-error.*
 # clés locales (ne jamais publier)
 .env
 .env.local
+
+# captures des tests de parcours
+e2e/screenshots/

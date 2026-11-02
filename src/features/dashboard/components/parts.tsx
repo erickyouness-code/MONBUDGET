@@ -125,6 +125,7 @@ export function MoneyRow({
   amountMinor,
   currency,
   showSign = false,
+  onPress,
 }: {
   icon: LucideIcon;
   title: string;
@@ -132,12 +133,18 @@ export function MoneyRow({
   amountMinor: number;
   currency: CurrencyCode;
   showSign?: boolean;
+  onPress?: () => void;
 }) {
   const { colors, spacing, radius } = useTheme();
   const isIncome = amountMinor > 0 && showSign;
 
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.md }}>
+    <Pressable
+      accessibilityRole={onPress ? 'button' : undefined}
+      disabled={!onPress}
+      onPress={onPress}
+      style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: spacing.md, opacity: pressed ? 0.7 : 1 })}
+    >
       <View
         style={{
           width: 42,
@@ -167,7 +174,7 @@ export function MoneyRow({
         signDisplay={showSign ? 'always' : 'never'}
         color={isIncome ? 'income' : 'text'}
       />
-    </View>
+    </Pressable>
   );
 }
 

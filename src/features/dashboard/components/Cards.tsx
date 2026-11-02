@@ -13,7 +13,6 @@ import { DonutChart } from '@/shared/ui/charts/DonutChart';
 import { LineAreaChart } from '@/shared/ui/charts/LineAreaChart';
 import { ProgressRing } from '@/shared/ui/charts/ProgressRing';
 
-import { ICONS } from '../icons';
 import type { DashboardData } from '../types';
 import { Chip, EmptyHint, MoneyRow, SectionCard, TextLink } from './parts';
 
@@ -61,17 +60,17 @@ export function CategoryBreakdownCard({ data }: Props) {
               <View style={{ alignItems: 'center' }}>
                 <AppText variant="headline">{shares[0]}%</AppText>
                 <AppText variant="small" color="textTertiary" numberOfLines={1}>
-                  {t(`categories.${top.key}`)}
+                  {top.label}
                 </AppText>
               </View>
             ) : null}
           </DonutChart>
           <View style={{ flex: 1, gap: spacing.sm }}>
             {items.map((item, i) => (
-              <View key={item.key} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
+              <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: spacing.sm }}>
                 <View style={{ width: 10, height: 10, borderRadius: 3, backgroundColor: chart[i % chart.length] }} />
                 <AppText variant="caption" color="textSecondary" numberOfLines={1} style={{ flex: 1 }}>
-                  {t(`categories.${item.key}`)}
+                  {item.label}
                 </AppText>
                 <AppText variant="caption" tabular>
                   {shares[i]}%
@@ -144,7 +143,7 @@ export function SubscriptionsCard({ data }: Props) {
           {data.subscriptions.map((s) => (
             <MoneyRow
               key={s.id}
-              icon={ICONS[s.icon]}
+              icon={s.icon}
               title={s.name}
               subtitle={t('dashboard.everyMonthOn', { day: s.dayOfMonth })}
               amountMinor={s.amountMinor}
@@ -178,12 +177,17 @@ export function RecentTransactionsCard({ data }: Props) {
           {items.map((tx) => (
             <MoneyRow
               key={tx.id}
-              icon={ICONS[tx.icon]}
+              icon={tx.icon}
               title={tx.label}
               subtitle={formatDayShort(tx.date, language)}
               amountMinor={tx.amountMinor}
               currency={data.currency}
-              showSign
+              showSign={!tx.neutral}
+              onPress={
+                tx.transactionId
+                  ? () => router.push({ pathname: '/transaction/[id]', params: { id: tx.transactionId! } })
+                  : undefined
+              }
             />
           ))}
         </View>

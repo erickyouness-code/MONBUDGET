@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "Mizane",
-    "slug": "mizane",
+    "name": "MonBudget",
+    "slug": "monbudget",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -33,6 +33,6 @@
       "expo-font",
       "expo-secure-store"
     ],
-    "scheme": "mizane"
+    "scheme": "monbudget"
   }
 }

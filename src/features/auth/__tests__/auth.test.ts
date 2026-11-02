@@ -20,9 +20,9 @@ describe('stockage de session découpé', () => {
     const base = memoryStore();
     const store = createChunkedStore(base);
     const session = JSON.stringify({ token: 'x'.repeat(CHUNK_SIZE * 2 + 37) });
-    await store.setItem('mizane.auth', session);
-    expect(base.data.get('mizane.auth.count')).toBe('3');
-    expect(await store.getItem('mizane.auth')).toBe(session);
+    await store.setItem('monbudget.auth', session);
+    expect(base.data.get('monbudget.auth.count')).toBe('3');
+    expect(await store.getItem('monbudget.auth')).toBe(session);
   });
 
   it('nettoie les anciens morceaux quand la session raccourcit', async () => {

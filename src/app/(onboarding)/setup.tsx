@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AuthLayout } from '@/features/auth/AuthLayout';
 import { FormField } from '@/features/auth/FormField';
 import { onboardingSchema, type OnboardingInput, type OnboardingValues } from '@/features/auth/schemas';
+import { useSaveAccount } from '@/features/accounts/api';
 import { useUpdateProfile } from '@/features/profile/api';
 import { COUNTRIES, type CountryCode } from '@/shared/config/countries';
 import { CURRENCY_CODES } from '@/shared/config/currencies';
@@ -26,6 +27,7 @@ export default function OnboardingSetupScreen() {
   const language = useLanguage();
   const setCurrencyPreference = usePreferences((s) => s.setCurrency);
   const updateProfile = useUpdateProfile();
+  const saveAccount = useSaveAccount();
   const [serverError, setServerError] = useState<string | null>(null);
 
   const { control, handleSubmit, setValue, formState } = useForm<OnboardingInput, unknown, OnboardingValues>({
@@ -50,6 +52,10 @@ export default function OnboardingSetupScreen() {
         onboarding_completed_at: new Date().toISOString(),
       });
       setCurrencyPreference(values.currency);
+      // Premier compte créé automatiquement, modifiable ensuite (étape 2).
+      await saveAccount
+        .mutateAsync({ name: t('accounts.defaultCash'), type: 'cash', currency_code: values.currency, initial_balance_minor: 0 })
+        .catch(() => undefined);
       // Succès : la navigation vers le tableau de bord est automatique.
     } catch {
       setServerError(t('auth.errors.unknown'));

@@ -6,7 +6,7 @@ Document de référence validé avant l'implémentation. À mettre à jour à ch
 
 | Sujet | Décision |
 |---|---|
-| Nom (provisoire) | Mizane |
+| Nom | MonBudget |
 | Style visuel | Violet + cartes blanches, tuiles teintées, graphiques (inspiré de la maquette fournie) ; police Inter (système en arabe) |
 | Mode démonstration | Données d'exemple désactivées par défaut, signalées par une bannière, jamais enregistrées |
 | Essai gratuit | 3 jours, géré par Apple / Google (offre d'introduction de l'abonnement) |
@@ -39,7 +39,7 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 |---|---|---|
 | 0 | Fondations : projet, design system, thèmes, i18n + RTL, navigation | ✅ Terminé |
 | 1 | Supabase : authentification, onboarding, profils, RLS | ✅ Code terminé — à brancher sur votre projet Supabase |
-| 2 | Comptes + transactions (CRUD, recherche, transferts, catégories) | À faire |
+| 2 | Comptes + transactions (CRUD, recherche, transferts, catégories) | ✅ Code terminé — à brancher sur votre projet Supabase |
 | 3 | Tableau de bord + graphiques | À faire |
 | 4 | Budgets + alertes | À faire |
 | 5 | Objectifs d'épargne | À faire |
@@ -57,9 +57,26 @@ Vues / fonctions : `account_balances`, `monthly_summary`, `category_spending`,
 - Aiguillage automatique : connexion → premier paramétrage (pays, devise, prénom) → tableau de bord.
 - Connexion Apple / Google : prévue à l'étape 10 (nécessite les comptes développeur).
 
+## Étape 2 — détails
+
+- Comptes : espèces, banque, Mobile Money, épargne, autre ; solde initial ; archivage.
+  Un compte qui contient des transactions ne peut pas être supprimé (il s'archive).
+- Soldes calculés par la base (vue `account_balances`), jamais stockés.
+- Transactions : dépense, revenu, transfert ; montant, date, catégorie, compte, moyen de paiement,
+  description. Un transfert n'est jamais compté comme revenu ou dépense (règle en base + tests).
+- La base refuse : montant nul ou négatif, transfert vers le même compte, dépense sans catégorie,
+  catégorie de revenu utilisée pour une dépense, compte ou catégorie d'un autre utilisateur.
+- 19 catégories par défaut adaptées au Maroc et au Gabon (dont Mobile Money, recharges, famille),
+  et création de catégories personnelles.
+- Historique groupé par jour, recherche (description et catégorie), filtres par type, pagination.
+- Tableau de bord branché sur les vraies données du mois (revenus, dépenses, catégories, récentes).
+- Une seule devise en V1 : elle est figée dès qu'un compte existe.
+
 ## Limites connues
 
 - Le changement de sens d'écriture (arabe ↔ français/anglais) nécessite un redémarrage de
   l'application sur iOS et Android. L'application prévient l'utilisateur et redémarre seule.
+- Le solde initial d'un compte ne peut pas encore être négatif depuis l'écran (la base l'accepte).
+- La courbe d'évolution du solde, l'épargne et les abonnements du tableau de bord arrivent aux étapes 3, 5 et 6.
 - Les achats intégrés ne fonctionnent pas dans Expo Go : une « development build » (EAS)
   sera nécessaire à partir de l'étape 8.

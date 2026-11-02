@@ -5,18 +5,30 @@ Durée : environ 15 minutes. Aucune connaissance technique particulière n'est n
 ## 1. Créer le projet
 
 1. Créez un compte sur [supabase.com](https://supabase.com) puis cliquez sur **New project**.
-2. **Name** : `mizane`.
+2. **Name** : `monbudget`.
 3. **Database password** : générez un mot de passe fort et gardez-le dans un gestionnaire de mots de passe.
    Il ne doit jamais être partagé, ni avec moi ni dans le code.
 4. **Region** : choisissez une région en Europe (par exemple *Central EU (Frankfurt)* ou *West EU (Paris)*),
    la plus proche du Maroc et du Gabon.
 5. Cliquez sur **Create new project** et attendez une à deux minutes.
 
-## 2. Créer la table des profils
+## 2. Créer les tables
+
+Les fichiers du dossier `supabase/migrations/` s'exécutent **un par un, dans l'ordre de leur nom** :
+
+| Ordre | Fichier | Contenu |
+|---|---|---|
+| 1 | `20261102000000_profiles.sql` | Profils (étape 1) |
+| 2 | `20261103000000_accounts_transactions.sql` | Comptes, catégories, transactions (étape 2) |
+
+Pour chaque fichier :
 
 1. Menu de gauche : **SQL Editor** → **New query**.
-2. Copiez tout le contenu du fichier `supabase/migrations/20261102000000_profiles.sql` et collez-le.
+2. Copiez tout le contenu du fichier et collez-le.
 3. Cliquez sur **Run**. Le message « Success. No rows returned » doit s'afficher.
+
+> N'exécutez jamais deux fois le même fichier. À chaque nouvelle étape, je vous indiquerai le
+> nouveau fichier à exécuter.
 
 ## 3. Réglages de connexion
 
@@ -31,7 +43,7 @@ Menu **Authentication** :
   texte qui contient `{{ .Token }}` :
   - **Confirm signup** — par exemple :
     ```html
-    <h2>Bienvenue sur Mizane</h2>
+    <h2>Bienvenue sur MonBudget</h2>
     <p>Votre code de confirmation : <strong>{{ .Token }}</strong></p>
     <p>Il expire dans 1 heure. Si vous n'êtes pas à l'origine de cette demande, ignorez ce message.</p>
     ```
