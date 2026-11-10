@@ -19,6 +19,10 @@ Durée : environ 15 minutes. Aucune connaissance technique particulière n'est n
 
 ## 2. Créer les tables
 
+**Le plus simple :** ouvrez `supabase/setup/tout-en-un.sql` (sur GitHub : bouton « Raw », puis
+tout sélectionner et copier), collez-le dans **SQL Editor → New query** et cliquez sur **Run**.
+Une seule fois, sur un projet neuf. Sinon, les fichiers un par un :
+
 Les fichiers du dossier `supabase/migrations/` s'exécutent **un par un, dans l'ordre de leur nom** :
 
 | Ordre | Fichier | Contenu |
