@@ -28,12 +28,22 @@ const BY_CODE: Record<string, AuthErrorKey> = {
   over_sms_send_rate_limit: 'auth.errors.rateLimited',
   otp_expired: 'auth.errors.codeExpired',
   same_password: 'auth.errors.samePassword',
+  // Le serveur n'a pas pu envoyer l'e-mail (service d'envoi non configuré) :
+  // problème de configuration du serveur, pas de l'utilisateur.
+  email_address_not_authorized: 'auth.errors.notConfigured',
+  signup_disabled: 'auth.errors.notConfigured',
+  email_provider_disabled: 'auth.errors.notConfigured',
 };
 
 export function authErrorKey(error: ErrorLike): AuthErrorKey {
+  // En développement uniquement : la cause exacte s'affiche dans le terminal.
+  if (typeof __DEV__ !== 'undefined' && __DEV__ && error) {
+    console.warn(`[auth] ${error.status ?? '-'} ${error.code ?? '-'} ${error.message ?? ''}`);
+  }
   if (!error) return 'auth.errors.unknown';
   if (error.code && BY_CODE[error.code]) return BY_CODE[error.code]!;
   if (error.status === 429) return 'auth.errors.rateLimited';
+  if (/invalid api key|sending confirmation email/i.test(error.message ?? '')) return 'auth.errors.notConfigured';
   if (error.name === 'AuthRetryableFetchError' || /network|fetch/i.test(error.message ?? '')) {
     return 'auth.errors.network';
   }
