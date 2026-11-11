@@ -1,5 +1,5 @@
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useTranslation } from 'react-i18next';
@@ -50,7 +50,7 @@ export default function VerifyScreen() {
   const onSubmit = () => void submit();
 
   return (
-    <AuthLayout title={t('auth.verifyTitle')} subtitle={t('auth.verifySubtitle', { email })}>
+    <AuthLayout title={t('auth.verifyTitle')} subtitle={email ? t('auth.verifySubtitle', { email }) : t('auth.verifySubtitleGeneric')}>
       {serverError ? <Banner tone="error" message={serverError} /> : null}
       {info ? <Banner tone="success" message={info} /> : null}
       <FormField
@@ -69,9 +69,11 @@ export default function VerifyScreen() {
         label={cooldown > 0 ? t('auth.resendIn', { seconds: cooldown }) : t('auth.resend')}
         variant="ghost"
         fullWidth
-        disabled={cooldown > 0}
+        disabled={cooldown > 0 || !email}
         onPress={resend}
       />
+      {/* Toujours une issue : revenir à la connexion (adresse perdue, code jamais reçu…). */}
+      <Button label={t('auth.goToSignIn')} variant="ghost" fullWidth onPress={() => router.replace('/sign-in')} />
     </AuthLayout>
   );
 }

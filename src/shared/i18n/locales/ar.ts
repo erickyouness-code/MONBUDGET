@@ -55,6 +55,7 @@ export const ar: TranslationResource = {
     enterCode: 'إدخال رمز التأكيد',
     verifyTitle: 'تحقّق من بريدك',
     verifySubtitle: 'أدخل الرمز المرسل إلى {{email}}. تحقّق أيضًا من الرسائل غير المرغوب فيها.',
+    verifySubtitleGeneric: 'أدخل الرمز الذي وصلك عبر البريد الإلكتروني. تحقّق أيضًا من مجلد الرسائل غير المرغوب فيها.',
     verifyAction: 'تأكيد',
     resend: 'إعادة إرسال الرمز',
     resendIn: 'إعادة إرسال الرمز ({{seconds}} ث)',

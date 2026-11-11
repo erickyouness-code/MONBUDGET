@@ -54,6 +54,7 @@ export const fr = {
     enterCode: 'Saisir le code de confirmation',
     verifyTitle: 'Vérifiez votre e-mail',
     verifySubtitle: 'Saisissez le code envoyé à {{email}}. Pensez à regarder dans vos courriers indésirables.',
+    verifySubtitleGeneric: 'Saisissez le code reçu par e-mail. Pensez à regarder dans vos courriers indésirables.',
     verifyAction: 'Valider',
     resend: 'Renvoyer le code',
     resendIn: 'Renvoyer le code ({{seconds}} s)',

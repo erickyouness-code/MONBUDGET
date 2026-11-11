@@ -55,6 +55,7 @@ export const en: TranslationResource = {
     enterCode: 'Enter the confirmation code',
     verifyTitle: 'Check your email',
     verifySubtitle: 'Enter the code sent to {{email}}. Don’t forget to check your spam folder.',
+    verifySubtitleGeneric: 'Enter the code you received by email. Remember to check your spam folder.',
     verifyAction: 'Confirm',
     resend: 'Resend code',
     resendIn: 'Resend code ({{seconds}} s)',
